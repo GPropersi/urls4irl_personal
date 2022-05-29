@@ -37,7 +37,7 @@ migrate = Migrate(app, db, render_as_batch=True)
 csrf = CSRFProtect(app)
 
 login_manager = LoginManager(app)
-login_manager.login_view = 'login'  # Where to send user if they aren't logged in but try to access a logged in page
+login_manager.login_view = 'splash'  # Where to send user if they aren't logged in but try to access a logged in page
 login_manager.login_message_category = 'info'
 
 CORS(app)

@@ -1,4 +1,3 @@
-from audioop import cross
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask import render_template, url_for, redirect, flash, request, jsonify, abort
 from urls4irl import app, db
@@ -8,7 +7,7 @@ from urls4irl.models import User, Utub, URLS, Utub_Urls, Tags, Url_Tags, Utub_Us
 from flask_login import login_user, login_required, current_user, logout_user
 from urls4irl.url_validation import InvalidURLError, check_request_head
 from flask_cors import cross_origin
-import sys
+import json
 
 """#####################        MAIN ROUTES        ###################"""
 
@@ -19,11 +18,67 @@ def splash():
     """
 
     # Test code until splash page built in
-    username = 'Giovanni'
-    user = User.query.filter_by(username=username).first()
-    login_user(user) 
-    return redirect(url_for('home'))
-    #return render_template('splash.html')
+    # username = 'Giovanni'
+    # user = User.query.filter_by(username=username).first()
+    # login_user(user) 
+    # return redirect(url_for('home'))
+    return render_template('layout.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    login_form = LoginForm()
+
+    if request.method == 'GET':
+        return render_template('_login_form.html', login_form=login_form)
+
+    else:
+        if login_form.validate_on_submit():
+            username = login_form.username.data
+            user = User.query.filter_by(username=username).first()
+
+            if user and check_password_hash(user.password, login_form.password.data):
+                login_user(user)    # Can add Remember Me functionality here
+                next_page = request.args.get('next')    # Takes user to the page they wanted to originally before being logged in
+
+                flash(f"Successful login, {username}", category="success")
+                return url_for(next_page) if next_page else url_for('home')
+
+            else:
+                flash_message = "Login Unsuccessful. Please check username and password."
+                flash_category = "danger"
+                
+                data = json.dumps({"flash": {"flash_message": flash_message, "flash_category": flash_category}}, ensure_ascii=False)
+                response_code = 422
+
+        else:
+            data = json.dumps(login_form.errors, ensure_ascii=False)
+            response_code = 422
+
+    return jsonify(data), response_code
+        
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    register_form = UserRegistrationForm()
+
+    if request.method == 'GET':
+        return render_template('_register_form.html', register_form=register_form)
+
+    else:
+        if register_form.validate_on_submit():
+            username = register_form.username.data
+            email = register_form.email.data
+            password = generate_password_hash(register_form.password.data, method='pbkdf2:sha512', salt_length=16)
+            new_user = User(username=username, email=email, email_confirm=False, password=password)
+            db.session.add(new_user)
+            db.session.commit()
+            user = User.query.filter_by(username=username).first()
+            login_user(user)
+            return url_for('home')
+
+        else:
+            data = json.dumps(register_form.errors, ensure_ascii=False)
+            response_code = 422
+            return jsonify(data), response_code
 
 @app.route('/home', methods=["GET"])
 @login_required
@@ -72,73 +127,73 @@ def home():
 
 """#####################        USER LOGIN/LOGOUT/REGISTRATION ROUTES        ###################"""
 
-@app.route('/login', methods=["GET", "POST"])
-def login():
-    """Login page. Allows user to register or login."""
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
+# @app.route('/login', methods=["GET", "POST"])
+# def login():
+#     """Login page. Allows user to register or login."""
+#     if current_user.is_authenticated:
+#         return redirect(url_for('home'))
 
-    response_code = 200
+#     response_code = 200
 
-    if not User.query.filter().all():
-        """!!! Added users for testing !!!"""
-        password = generate_password_hash('abcdefg', method='pbkdf2:sha512', salt_length=16)
-        password2 = generate_password_hash('rehreh', method='pbkdf2:sha512', salt_length=16)
-        password3 = generate_password_hash('bobob', method='pbkdf2:sha512', salt_length=16)
-        new_user = User(username="Giovanni", email='gio@g.com', email_confirm=False, password=password)
-        new_user2 = User(username="Rehan", email='Reh@reh.com', email_confirm=False, password=password2)
-        new_user3 = User(username="Bobo", email='Bob@bob.com', email_confirm=False, password=password3)
-        db.session.add(new_user)
-        db.session.add(new_user2)
-        db.session.add(new_user3)
-        db.session.commit()
-        flash("Added test user.", category='info')
+#     if not User.query.filter().all():
+#         """!!! Added users for testing !!!"""
+#         password = generate_password_hash('abcdefg', method='pbkdf2:sha512', salt_length=16)
+#         password2 = generate_password_hash('rehreh', method='pbkdf2:sha512', salt_length=16)
+#         password3 = generate_password_hash('bobob', method='pbkdf2:sha512', salt_length=16)
+#         new_user = User(username="Giovanni", email='gio@g.com', email_confirm=False, password=password)
+#         new_user2 = User(username="Rehan", email='Reh@reh.com', email_confirm=False, password=password2)
+#         new_user3 = User(username="Bobo", email='Bob@bob.com', email_confirm=False, password=password3)
+#         db.session.add(new_user)
+#         db.session.add(new_user2)
+#         db.session.add(new_user3)
+#         db.session.commit()
+#         flash("Added test user.", category='info')
 
-    login_form = LoginForm()
+#     login_form = LoginForm()
 
-    if login_form.validate_on_submit():
-        username = login_form.username.data
-        user = User.query.filter_by(username=username).first()
+#     if login_form.validate_on_submit():
+#         username = login_form.username.data
+#         user = User.query.filter_by(username=username).first()
 
-        if user and check_password_hash(user.password, login_form.password.data):
-            login_user(user)    # Can add Remember Me functionality here
-            next_page = request.args.get('next')    # Takes user to the page they wanted to originally before being logged in
+#         if user and check_password_hash(user.password, login_form.password.data):
+#             login_user(user)    # Can add Remember Me functionality here
+#             next_page = request.args.get('next')    # Takes user to the page they wanted to originally before being logged in
 
-            flash(f"Successful login, {username}", category="success")
-            return redirect(next_page) if next_page else redirect(url_for('home'))
-        else:
-            flash(f"Login Unsuccessful. Please check username and password.", category="danger")
-            response_code = 400
+#             flash(f"Successful login, {username}", category="success")
+#             return redirect(next_page) if next_page else redirect(url_for('home'))
+#         else:
+#             flash(f"Login Unsuccessful. Please check username and password.", category="danger")
+#             response_code = 400
 
-    return render_template('login.html', login_form=login_form), response_code
+#     return render_template('login.html', login_form=login_form), response_code
 
 @app.route('/logout')
 def logout():
     """Logs user out by clearing session details. Returns to login page."""
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('splash'))
 
-@app.route('/register', methods=["GET", "POST"])
-def register_user():
-    """Allows a user to register an account."""
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
+# @app.route('/register', methods=["GET", "POST"])
+# def register_user():
+#     """Allows a user to register an account."""
+#     if current_user.is_authenticated:
+#         return redirect(url_for('home'))
 
-    register_form = UserRegistrationForm()
+#     register_form = UserRegistrationForm()
 
-    if register_form.validate_on_submit():
-        username = register_form.username.data
-        email = register_form.email.data
-        password = generate_password_hash(register_form.password.data, method='pbkdf2:sha512', salt_length=16)
-        new_user = User(username=username, email=email, email_confirm=False, password=password)
-        db.session.add(new_user)
-        db.session.commit()
-        user = User.query.filter_by(username=username).first()
-        login_user(user)
-        flash(f"Account created for {register_form.username.data}!", "success")
-        return redirect(url_for('home'))
+#     if register_form.validate_on_submit():
+#         username = register_form.username.data
+#         email = register_form.email.data
+#         password = generate_password_hash(register_form.password.data, method='pbkdf2:sha512', salt_length=16)
+#         new_user = User(username=username, email=email, email_confirm=False, password=password)
+#         db.session.add(new_user)
+#         db.session.commit()
+#         user = User.query.filter_by(username=username).first()
+#         login_user(user)
+#         flash(f"Account created for {register_form.username.data}!", "success")
+#         return redirect(url_for('home'))
 
-    return render_template('register_user.html', register_form=register_form)
+#     return render_template('register_user.html', register_form=register_form)
 
 """#####################        END USER LOGIN/LOGOUT/REGISTRATION ROUTES        ###################"""
 

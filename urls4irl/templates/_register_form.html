@@ -1,0 +1,93 @@
+<form id="ModalForm" name="stepForm" class="form" method="post">
+    <div class="modal-header">
+        <h4 class="modal-title">Register</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div class="modal-body" id="modal-body">
+        {{ register_form.hidden_tag() }}
+        <fieldset class="form-group">
+            <div class="form-group">
+                {{ register_form.username.label(class="form-control-label")}}
+                {% if register_form.username.errors %}
+                    {{ register_form.username(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.username.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.username(class="form-control form-control-lg")}}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.email.label(class="form-control-label")}}
+                {% if register_form.email.errors %}
+                    {{ register_form.email(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.email.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.email(class="form-control form-control-lg")}}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.confirm_email.label(class="form-control-label")}}
+                {% if register_form.confirm_email.errors %}
+                    {{ register_form.confirm_email(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.confirm_email.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.confirm_email(class="form-control form-control-lg")}}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.password.label(class="form-control-label")}}
+                {% if register_form.password.errors %}
+                    {{ register_form.password(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.password.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.password(class="form-control form-control-lg")}}
+                {% endif %}                
+            </div>
+            <div class="form-group">
+                {{ register_form.confirm_password.label(class="form-control-label")}}
+                {% if register_form.confirm_password.errors %}
+                    {{ register_form.confirm_password(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.confirm_password.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.confirm_password(class="form-control form-control-lg")}}
+                {% endif %}    
+            </div>
+        </fieldset>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        {{ register_form.submit(class="btn btn-success")}}
+    </div>
+</form>
+<div class="d-flex justify-content-center">
+    <div class="border-top pb-3">
+        <small class="text-muted">
+            <a class="to_login" href="#">Already a user? Login</a>
+        </small>
+    </div>
+</div>
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='login_register_modals.js') }}"></script>
+{% endblock scripts %}

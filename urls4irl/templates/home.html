@@ -1,124 +1,247 @@
-{% extends "layout.html" %}
+{% extends "splash.html" %}
+{% block addl_css %}
+    {{ super() }}
+{% endblock %}
+
 {% block content %}
-
 <div class="d-flex justify-content-center flex-row">
-    <h1>Hello there  {{current_user.username}}.</h1>
+    <h1>Welcome  {{current_user.username}}</h1>
 </div>
-<div class="d-flex justify-content-center flex-row">
-    <p>Find your UTubs below</p>
-</div>
-
 <script type="text/javascript">
-    var jsArrayOfItems = JSON.parse('{{utubs_for_this_user|tojson|safe}}');
-    console.log(jsArrayOfItems)
+    const userUtubs = JSON.parse('{{utubs_for_this_user|tojson|safe}}');
 </script>
-{% if not utubs %}
-    <div class="d-flex justify-content-center flex-row">
-        <p>No UTubs for you :(</p>
-    </div>
+<section class="container-fluid px-1 py-2">
+    <div class="row align-items-left content">
 
-{% else %}
-    {% for single_utub in utubs %}
-        <div class="d-flex justify-content-center flex-row">
-            <h3>UTub: {{single_utub.name}}</h3> 
-        </div>
-        {% if single_utub.created_by.id == current_user.id %}
-            <div class="d-flex justify-content-center flex-row">
-                <form action="{{url_for('delete_utub', utub_id=single_utub.id)}}" method="post">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button class="btn btn-danger btn-sm mb-3 mx-3" href="">Delete this UTub</button>
+        <!-- Left Side Panel -->
+        <div class="col-md-2 order-2 order-md-1">
+
+            <!-- Will be creation date ordered by default, but repositionable (preferenced order saved and stored with user) -->
+            <div id="UTubDeck" class="col-12 col-lg-12 mb-md-1 p-3 panel">
+                <h2>UTubs</h2>
+                <div class="form-check utub-names-ids">
+                    <!-- UTUB NAMES, IDS, RATIO BUTTONS HERE -->
+                </div>
+                <a class="btn btn-primary create-utub btn-block" style="margin-top: 10px" href="#">Make a UTub!</a>
+            </div>
+            <!-- Will be alpha ordered -->
+            <div id="TagDeck" class="col-12 col-lg-12 mb-md-1 p-3 panel">
+                <h2>Tags</h2>
+                <form>
+                    <label for="Economy">
+                        <input type="checkbox" id="Tag1" name="Economy">
+                        Economy
+                    </label>
+                    <label for="Flask">
+                        <input type="checkbox" id="Tag1" name="Flask" checked>
+                        Flask
+                    </label>
+                    <label for="Sports">
+                        <input type="checkbox" id="Tag3" name="Sports">
+                        Sports
+                    </label>
+                    <label for="Videos">
+                        <input type="checkbox" id="Tag2" name="Videos" checked>
+                        Videos
+                    </label>
+                    </label>
+                    <label for="YouTube">
+                        <input type="checkbox" id="Tag4" name="YouTube" checked>
+                        YouTube
+                    </label>
                 </form>
             </div>
-        {% endif %}
-        <div class="d-flex justify-content-center flex-row">
-            <h5>Members</h5> 
         </div>
-        <div class="d-flex justify-content-center flex-row">
-            <ul>
-                <li>UTub Owner: {{single_utub.created_by.username}}</li>
-            {% for member in single_utub.members %}
-                <li>User in "{{single_utub.name}}": {{member.to_user.username}}</li>
-                {% if single_utub.created_by.id == current_user.id and member.user_id != single_utub.created_by.id %}
-                    <div class="d-flex justify-content-center flex-row">
-                        <form action="{{url_for('delete_user', utub_id=single_utub.id, user_id=member.user_id)}}" method="post">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <button class="btn btn-danger btn-sm mb-3 mx-3" href="">Delete this User</button>
-                        </form>
-                    </div>
-                {% elif member.user_id == current_user.id and single_utub.created_by.id != current_user.id %}
-                    <div class="d-flex justify-content-center flex-row">
-                        <form action="{{url_for('delete_user', utub_id=single_utub.id, user_id=member.user_id)}}" method="post">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <button class="btn btn-danger btn-sm mb-3 mx-3" href="">Leave Utub</button>
-                        </form>
-                    </div>
-                {% endif %}
-            {% endfor %}
-            </ul>
-        </div>
-        <div class="d-flex justify-content-center flex-row">
-            <h5>URLs</h5> 
-        </div>
-        <div class="d-flex justify-content-center flex-row">
-            <ul>
-            {% for link in single_utub.utub_urls %}
-                <li>Link in "{{single_utub.name}}": {{link.url_in_utub.url_string}}</li>
-                <small>Added by {{link.user_that_added_url.username}}</small>
+
+
+        <!-- Center Panel -->
+
+        <div id="centerPanel" class="col-md-5 text-left order-2 order-md-1 mb-md-1 px-0 py-3 panel">
+            <div class="row justify-content-center">
+                <div class="col-10 col-lg-8  mb-md-0">
+                    <h2>Web Development</h2>
+                    <p class="lead">
+                        This UTub is intended to hold links that help with the development of this website
+                        application.
+
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Quaerat, a!
+                    </p>
                     <ul>
-                        <small>Tags:</small>
-                        {% for tag in single_utub.utub_url_tags %}
-                            {% if tag.url_id == link.url_id %}
-                                <li><small>{{tag.tag_item.tag_string}}</small></li>
-                                    {% if single_utub.created_by.id == current_user.id %}
-                                        <div class="d-flex justify-content-center">
-                                                <small class="text-muted">
-                                                    <form action="{{url_for('remove_tag', utub_id=single_utub.id, url_id=link.url_id, tag_id=tag.tag_id)}}" method="post">
-                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                                        <button class="btn btn-link btn-sm" href="">Delete tag</button>
-                                                    </form>
-                                                </small>
-                                        </div>
-                                    {% endif %}
-                            {% endif %}
-                        {% endfor %}              
+                        <li>
+                            <a
+                                href="https://dba.stackexchange.com/questions/68266/what-is-the-best-way-to-store-an-email-address-in-postgresql">
+                                https://dba.stackexchange.com/questions/68266/what-is-the-best-way-to-store-an-email-address-in-postgresql</a>
+                            <span class="tag">StackExchange</span>
+                        </li>
+                        <li>
+                            <a href="https://blog.codinghorror.com/youre-probably-storing-passwords-incorrectly/">
+                                Hashing and salting necessary</a>
+                        </li>
+                        <li>
+                            <a href="https://www.freecodecamp.org/news/how-to-authenticate-users-in-flask/">
+                                Authentication in flask</a>
+                            <span class="tag">Flask</span>
+                        </li>
+                        <li>
+                            <a href="https://flask-sqlalchemy.palletsprojects.com/en/2.x/">
+                                Ease of life for flask + databases</a>
+                            <span class="tag">Flask</span>
+                        </li>
+                        <li>
+                            <a href="https://fmhelp.filemaker.com/help/18/fmp/en/index.html#page/FMP_Help/many-to-many-relationships.html">
+                                Many-to-many relationships (multiple users to multiple repos issue)</a>
+                        </li>
+                        <li>
+                            <a href="https://stackoverflow.com/questions/9789736/how-to-implement-a-many-to-many-relationship-in-postgresql">
+                                Many-to-many in postgresql</a>
+                            <span class="tag">StackOverflow</span>
+                        </li>
+                        <li>
+                            <a href="https://rapidapi.com/collection/profanity-filter">
+                                APIs to help us keep tags clean</a>
+                        </li>
+                        <li>
+                            <a href="https://dbdiagram.io/d/6209c1fa85022f4ee588a95f">
+                                Database Schema</a>
+                        </li>
+                        <li>
+                            <a href="https://realpython.com/python-virtual-environments-a-primer/#how-does-a-virtual-environment-work">
+                                Venv installer</a>
+                        </li>
+                        <li>
+                            <a href="https://www.youtube.com/watch?v=UXqiVe6h3lA">
+                                Flask + VSCode</a>
+                            <span class="tag">Flask</span>
+                            <span class="tag">Videos</span>
+                            <span class="tag">YouTube</span>
+                        </li>
+                        <li>
+                            <a href="https://www.youtube.com/watch?v=MwZwr5Tvyxo&list=PL-osiE80TeTs4UjLw5MM6OjgkjFeUxCYH">
+                                Excellent tutorial series for Flask</a>
+                            <span class="tag">Videos</span>
+                            <span class="tag">YouTube</span>
+                        </li>
+                        <li>
+                            <a href="https://testdriven.io/blog/flask-server-side-sessions/">
+                                Session storage, client vs server side
+                            </a>
+                        </li>
                     </ul>
-                    {% if link.user_id == current_user.id or single_utub.created_by.id == current_user.id %}
-                        <div class="d-flex justify-content-center flex-row">
-                            <a class="btn btn-info btn-sm col-6 mb-3 mx-3" href="{{url_for('add_tag', utub_id=single_utub.id, url_id=link.url_id)}}">Add tags</a>
-                            <form action="{{url_for('delete_url', utub_id=single_utub.id, url_id=link.url_id)}}" method="post">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <button class="btn btn-danger btn-sm col-6 mb-3" href="">Delete this URL</button>
-                            </form>
-                        </div>
-                    {% endif %}
-                <br>
-            {% endfor %}
-            </ul>
-        </div>
-        <div class="d-flex justify-content-center">
-            {% if single_utub.created_by.id == current_user.id %}
-                <div class="d-flex justify-content-center flex-row mb-5">
-                    <a class="btn btn-success btn-sm col-8 mx-3" href="{{url_for('add_user', utub_id=single_utub.id)}}">Add a user!</a>
-                    <a class="btn btn-success btn-sm col-8 mx-3" href="{{url_for('add_url', utub_id=single_utub.id)}}">Add a URL!</a>
                 </div>
-            {% else %}
-                <div class="d-flex justify-content-center flex-row mb-5">
-                    <a class="btn btn-success btn-md col-12 px-4" href="{{url_for('add_url', utub_id=single_utub.id)}}">Add a URL!</a>
+                <div class="col-10 col-lg-8  mb-md-0">
+                    <h2>Cool Math</h2>
+                    <p class="lead">
+                        This UTub is intended to hold interesting math insights posted across the web.
+
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque, iste molestiae
+                        beatae, maiores deserunt
+                        in voluptatibus
+                        aspernatur architecto excepturi delectus soluta? Ipsa, deleniti dolorem hic consequatur
+                        repellat eveniet quidem
+                        voluptate necessitatibus dolorum delectus minus vitae, ut, veritatis sint ipsum magnam
+                        autem nam ex deserunt debitis
+                        eaque ratione! Nobis, quidem assumenda.
+                    </p>
+                    <ul>
+                        <li>
+                            <a href="https://www.youtube.com/watch?v=ltLUadnCyi0">
+                                https://www.youtube.com/watch?v=ltLUadnCyi0</a>
+                            <span class="tag">Videos</span>
+                            <span class="tag">YouTube</span>
+                        </li>
+                        <li>
+                            <a href="https://www.purplemath.com/modules/factnumb.htm">
+                                https://www.purplemath.com/modules/factnumb.htm
+                            </a>
+                            <span class="tag">Videos</span>
+                        </li>
+                    </ul>
                 </div>
-            {% endif %}
+                <div class="col-10 col-lg-8 mb-md-0">
+                    <h2>VSauce</h2>
+                    <p class="lead">
+                        This UTub is intended to hold all things VSauce.
+
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque, iste molestiae
+                        beatae, maiores deserunt
+                        in voluptatibus
+                        aspernatur architecto excepturi delectus soluta?
+                    </p>
+                    <ul>
+                        <li>
+                            <a href="https://www.youtube.com/watch?v=zHL9GP_B30E">
+                                https://www.youtube.com/watch?v=zHL9GP_B30E
+                            </a>
+                            <span class="tag">Videos</span>
+                            <span class="tag">YouTube</span>
+                        </li>
+                        <li>
+                            <a href="https://www.youtube.com/watch?v=VNqNnUJVcVs">
+                                https://www.youtube.com/watch?v=VNqNnUJVcVs
+                            </a>
+                            <span class="tag">Videos</span>
+                            <span class="tag">YouTube</span>
+                        </li>
+                        <li>
+                            <a
+                                href="https://twitter.com/tweetsauce?ref_src=twsrc%5Egoogle%7Ctwcamp%5Eserp%7Ctwgr%5Eauthor">
+                                https://twitter.com/tweetsauce?ref_src=twsrc%5Egoogle%7Ctwcamp%5Eserp%7Ctwgr%5Eauthor
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://en.wikipedia.org/wiki/Michael_Stevens_(educator)">
+                                https://en.wikipedia.org/wiki/Michael_Stevens_(educator)
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
-    {% endfor %}
-{% endif %}
-<div class="d-flex justify-content-center">
-    <div class="border-top pt-1">
-        <div class="d-flex justify-content-center flex-row my-3">
-            <a class="btn btn-primary col-7 mx-3" href="{{url_for('create_utub')}}">Create a UTub!</a>
-            <a class="btn btn-primary col-4 mx-3" href="{{url_for('logout')}}">Logout</a>
+
+
+        <!-- Right Side Panel -->
+
+        <div id="rightPanel" class="col-md-5 order-3 order-md-3 panel">
+            <div id="InfoDeck" class="col-12 col-lg-12 mb-md-1 p-3 panel">
+
+                <h2>Information</h2>
+                <p class="lead">
+                    Storing email addresses in a PostGreSQL database
+
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque, iste molestiae
+                    beatae, maiores deserunt
+                    in voluptatibus
+                    aspernatur architecto excepturi delectus soluta? Ipsa, deleniti dolorem hic consequatur
+                    repellat eveniet quidem
+                    voluptate necessitatibus dolorum delectus minus vitae, ut, veritatis sint ipsum magnam
+                    autem nam ex deserunt debitis
+                    eaque ratione! Nobis, quidem assumenda.
+                </p>
+
+                <button>Access URL</button>
+            </div>
+
+            <div id="ChatDeck" class="col-12 col-lg-12 mb-md-1 p-3 panel">
+                <h2>Chat</h2>
+                <p class="lead">
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque, iste molestiae
+                    beatae, maiores deserunt
+                    in voluptatibus
+                    aspernatur architecto excepturi delectus soluta? Ipsa, deleniti dolorem hic consequatur
+                    repellat eveniet quidem
+                    voluptate necessitatibus dolorum delectus minus vitae, ut, veritatis sint ipsum magnam
+                    autem nam ex deserunt debitis
+                    eaque ratione! Nobis, quidem assumenda.
+                </p>
+            </div>
         </div>
+
     </div>
-</div>
+
+</section>
+
+{% block modal_extender %}
+    {{ super() }}
+{% endblock %}
 
 {% endblock %}
-{% block scripts %}
-    <script src="{{ url_for('static', filename='login_register_modals.js') }}"></script>
-{% endblock scripts %}

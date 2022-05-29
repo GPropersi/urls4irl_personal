@@ -16,7 +16,7 @@ def splash():
     """
     Splash page for an unlogged in user
     """
-    return render_template('layout.html')
+    return render_template('splash.html')
 
 @app.route('/home', methods=["GET"])
 @login_required
@@ -74,6 +74,7 @@ def login():
 
     else:
         if login_form.validate_on_submit():
+            print("Trying to login")
             username = login_form.username.data
             user = User.query.filter_by(username=username).first()
 
@@ -145,16 +146,17 @@ def create_utub():
 
     if utub_form.validate_on_submit():
         name = utub_form.name.data
-        new_utub = Utub(name=name, utub_creator=current_user.get_id())
+        description = utub_form.description.data
+        new_utub = Utub(name=name, utub_creator=current_user.get_id(), utub_description=description)
         creator_to_utub = Utub_Users()
         creator_to_utub.to_user = current_user
         new_utub.members.append(creator_to_utub)
         db.session.commit()
         flash(f"Successfully made your UTub named {name}", category="success")
-        return redirect(url_for('home'))
+        return url_for('home')
 
     flash("Okay let's get you a new UTub!", category="primary")
-    return render_template('create_utub.html', utub_form=utub_form)
+    return render_template('_create_utub_form.html', utub_form=utub_form)
 
 @app.route('/delete_utub/<int:utub_id>', methods=["POST"])
 @login_required

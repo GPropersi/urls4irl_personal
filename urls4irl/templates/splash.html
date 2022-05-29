@@ -12,8 +12,20 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-backstretch/2.1.18/jquery.backstretch.min.js"></script>
-        <script src="{{ url_for('static', filename='login_register_modals.js') }}"></script>
-        <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+        {% block scripts_for_login %}
+            {% if not current_user.is_authenticated %}
+                <script src="{{ url_for('static', filename='login_register_modals.js') }}"></script>
+                <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+            {% else %}
+                <script src="{{ url_for('static', filename='utub_handler.js') }}"></script>
+            {% endif %}
+        {% endblock %}
+        {% block addl_css %}
+            {% if current_user.is_authenticated %}
+                <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+                <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,700" rel="stylesheet">
+            {% endif %}
+        {% endblock %}
     </head>
     <body>
         {% if not current_user.is_authenticated %}
@@ -63,15 +75,10 @@
             </div>
         </div>
         <!-- MODAL TEMPLATE -->
-        <div class="modal fade" id="Modal" tabindex="-1" role="dialog" aria-labelledby="FormModal" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <!-- MODAL CONTENT HERE -->
-                </div>
-            </div>
-        </div>
+
         </div>
         {% else %}
+            <!-- NAV BAR -->
             <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
                 <a class="navbar-brand" href="#">URLS4IRL</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,5 +95,14 @@
             {% block content %}
             {% endblock %}
         {% endif %}
+        {% block modal_extender %}
+            <div class="modal fade" id="Modal" tabindex="-1" role="dialog" aria-labelledby="FormModal" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <!-- MODAL CONTENT HERE -->
+                    </div>
+                </div>
+            </div>
+        {% endblock %}
     </body>
 </html>

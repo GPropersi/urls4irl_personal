@@ -57,7 +57,4 @@ $(document).ready(function() {
         var url = $(this).data('for-modal');
         modalOpener(url)
     });
-
 });
-
-$(".page-holder").backstretch("splash.jpg");

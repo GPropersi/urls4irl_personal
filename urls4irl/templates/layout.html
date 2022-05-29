@@ -11,57 +11,57 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-backstretch/2.1.18/jquery.backstretch.min.js"></script>
         <script src="{{ url_for('static', filename='login_register_modals.js') }}"></script>
         <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
     </head>
     <body>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a class="navbar-brand" href="#">URLS4IRL</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ml-auto">
-                    {% if not current_user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link to_register" href="#">Register</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link to_login" href="#">Login</a>
-                        </li>
-                    {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="/logout">Logout</a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </div>
-        </nav>
         {% if not current_user.is_authenticated %}
-        <div style="background: url(https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1740&q=80)" class="page-holder bg-cover h-100">
-            <div class="container splash-text">
-                <div class="row">
-                    <div class="col-6 align-self-center">
-                        <div class="jumbotron">
-                            THis is me
+        <div class="bg-img">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                <a class="navbar-brand" href="#">URLS4IRL</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ml-auto">
+                            <li class="nav-item">
+                                <a class="nav-link to_register" href="#">Register</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link to_login" href="#">Login</a>
+                            </li>
+                    </ul>
+                </div>
+            </nav>
+        
+        <!-- SPLASH PAGE INTRO -->
+        <div class="container-fluid bg-cover">
+            <div class="container-fluid jumbotron-holder">
+            <div class="jumbotron jumbotron-fluid">
+                <div class="container">
+                    <!-- <h1 class="display-4">Welcome to URLS4IRL</h1>
+                    <p class="lead">A simple, clean way to permanently save and share URLs.</p> -->
+                    <div class="row justify-content-center">
+                        <h1 class="display-4">Welcome to URLS4IRL</h1>
+                    </div>
+                    <div class="row justify-content-center">
+                        <p class="lead">A simple, clean way to permanently save and share URLs.</p>
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="col-xl-4 col-md-8">
+                            <a class="btn btn-info to_register btn-block splash-button"  href="#">Register</a>
                         </div>
-                        <!-- <header class="text-center text-black py-5">
-                            <h1 class="display-4 font-weight-bold mb-4">Welcome to URLS 4 IRL</h1>
-                            <p class="lead mb-0 mb-4">Create a responsive full-page background image window using Bootstrap 4.</p>
-                            <p class="font-italic mb-4">Snippet By <a href="https://bootstrapious.com" class="text-black">
-                                <u>Bootstrapious</u></a>
-                            </p>
-                        </header>
-                    
-                        <div class="text-black justify-content-center d-flex flex-row">
-                            <p class="lead">It's not a good approch to deal directly with <code class="bg-black px-2 py-1 rounded">body</code> So, create a wrapper container and make it a full-window height.</p>
-                            <p class="lead">Set the wrapper initial height to full window height using <code class="bg-black px-2 py-1 rounded">min-height: 100vh</code></p>
-                            <p class="lead">Use <code class="bg-black px-2 py-1 rounded">.bg-cover</code> to make the background fit all viewports.</p>
-                        </div> -->
+                    </div>
+                    <div class="row justify-content-center my-auto">
+                        <div class="col-xl-4 col-md-8">
+                            <a class="btn btn-info to_login btn-block splash-button" href="#">Login</a>
+                        </div>
                     </div>
                 </div>
+              </div>
             </div>
-        <!-- <a class="btn btn-info btn-sm edit-modal-opener" data-toggle="modal" data-for-modal="#" href="">Open Modal</a> -->
+        </div>
         <!-- MODAL TEMPLATE -->
         <div class="modal fade" id="Modal" tabindex="-1" role="dialog" aria-labelledby="FormModal" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -72,9 +72,21 @@
         </div>
         </div>
         {% else %}
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                <a class="navbar-brand" href="#">URLS4IRL</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/logout">Logout</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
             {% block content %}
             {% endblock %}
         {% endif %}
-        
     </body>
 </html>

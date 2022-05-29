@@ -16,13 +16,54 @@ def splash():
     """
     Splash page for an unlogged in user
     """
-
-    # Test code until splash page built in
-    # username = 'Giovanni'
-    # user = User.query.filter_by(username=username).first()
-    # login_user(user) 
-    # return redirect(url_for('home'))
     return render_template('layout.html')
+
+@app.route('/home', methods=["GET"])
+@login_required
+def home():
+    """
+    Splash page for logged in user. Loads and displays all UTubs, and contained URLs.
+    
+    Args:
+        /home : With no args, this returns all UTubIDs for the given user
+        /home?UTubID=[int] = Where the integer value is the associated UTubID
+                                that the user clicked on
+
+    Returns:
+        - All UTubIDs if no args
+        - Requested UTubID if a valid arg
+    """
+    if not request.args:
+        # User got here without any arguments in the URL
+        # Therefore, only provide UTub name and UTub ID
+        utub_details = current_user.serialized_on_initial_load
+        return render_template('home.html', utubs_for_this_user=utub_details)
+
+    elif len(request.args) > 1:
+        # Too many args in URL
+        return abort(404)
+
+    else:
+        if 'UTubID' not in request.args:
+            # Wrong argument
+            return abort(404)
+            
+        requested_id = request.args.get('UTubID')
+
+        utub = Utub.query.get_or_404(requested_id)
+        
+        if int(current_user.get_id()) not in [int(member.user_id) for member in utub.members]:
+            # User is not member of the UTub they are requesting
+            return abort(403)
+
+        utub_data_serialized = utub.serialized
+
+        return jsonify(utub_data_serialized)
+
+
+"""#####################        END MAIN ROUTES        ###################"""
+
+"""#####################        USER LOGIN/LOGOUT/REGISTRATION ROUTES        ###################"""
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -80,120 +121,11 @@ def register():
             response_code = 422
             return jsonify(data), response_code
 
-@app.route('/home', methods=["GET"])
-@login_required
-def home():
-    """
-    Splash page for logged in user. Loads and displays all UTubs, and contained URLs.
-    
-    Args:
-        /home : With no args, this returns all UTubIDs for the given user
-        /home?UTubID=[int] = Where the integer value is the associated UTubID
-                                that the user clicked on
-
-    Returns:
-        - All UTubIDs if no args
-        - Requested UTubID if a valid arg
-    """
-    if not request.args:
-        # User got here without any arguments in the URL
-        # Therefore, only provide UTub name and UTub ID
-        utub_details = current_user.serialized_on_initial_load
-        return render_template('home.html', utubs_for_this_user=utub_details)
-
-    elif len(request.args) > 1:
-        # Too many args in URL
-        return abort(404)
-
-    else:
-        if 'UTubID' not in request.args:
-            # Wrong argument
-            return abort(404)
-            
-        requested_id = request.args.get('UTubID')
-
-        utub = Utub.query.get_or_404(requested_id)
-        
-        if int(current_user.get_id()) not in [int(member.user_id) for member in utub.members]:
-            # User is not member of the UTub they are requesting
-            return abort(403)
-
-        utub_data_serialized = utub.serialized
-
-        return jsonify(utub_data_serialized)
-
-
-"""#####################        END MAIN ROUTES        ###################"""
-
-"""#####################        USER LOGIN/LOGOUT/REGISTRATION ROUTES        ###################"""
-
-# @app.route('/login', methods=["GET", "POST"])
-# def login():
-#     """Login page. Allows user to register or login."""
-#     if current_user.is_authenticated:
-#         return redirect(url_for('home'))
-
-#     response_code = 200
-
-#     if not User.query.filter().all():
-#         """!!! Added users for testing !!!"""
-#         password = generate_password_hash('abcdefg', method='pbkdf2:sha512', salt_length=16)
-#         password2 = generate_password_hash('rehreh', method='pbkdf2:sha512', salt_length=16)
-#         password3 = generate_password_hash('bobob', method='pbkdf2:sha512', salt_length=16)
-#         new_user = User(username="Giovanni", email='gio@g.com', email_confirm=False, password=password)
-#         new_user2 = User(username="Rehan", email='Reh@reh.com', email_confirm=False, password=password2)
-#         new_user3 = User(username="Bobo", email='Bob@bob.com', email_confirm=False, password=password3)
-#         db.session.add(new_user)
-#         db.session.add(new_user2)
-#         db.session.add(new_user3)
-#         db.session.commit()
-#         flash("Added test user.", category='info')
-
-#     login_form = LoginForm()
-
-#     if login_form.validate_on_submit():
-#         username = login_form.username.data
-#         user = User.query.filter_by(username=username).first()
-
-#         if user and check_password_hash(user.password, login_form.password.data):
-#             login_user(user)    # Can add Remember Me functionality here
-#             next_page = request.args.get('next')    # Takes user to the page they wanted to originally before being logged in
-
-#             flash(f"Successful login, {username}", category="success")
-#             return redirect(next_page) if next_page else redirect(url_for('home'))
-#         else:
-#             flash(f"Login Unsuccessful. Please check username and password.", category="danger")
-#             response_code = 400
-
-#     return render_template('login.html', login_form=login_form), response_code
-
 @app.route('/logout')
 def logout():
     """Logs user out by clearing session details. Returns to login page."""
     logout_user()
     return redirect(url_for('splash'))
-
-# @app.route('/register', methods=["GET", "POST"])
-# def register_user():
-#     """Allows a user to register an account."""
-#     if current_user.is_authenticated:
-#         return redirect(url_for('home'))
-
-#     register_form = UserRegistrationForm()
-
-#     if register_form.validate_on_submit():
-#         username = register_form.username.data
-#         email = register_form.email.data
-#         password = generate_password_hash(register_form.password.data, method='pbkdf2:sha512', salt_length=16)
-#         new_user = User(username=username, email=email, email_confirm=False, password=password)
-#         db.session.add(new_user)
-#         db.session.commit()
-#         user = User.query.filter_by(username=username).first()
-#         login_user(user)
-#         flash(f"Account created for {register_form.username.data}!", "success")
-#         return redirect(url_for('home'))
-
-#     return render_template('register_user.html', register_form=register_form)
 
 """#####################        END USER LOGIN/LOGOUT/REGISTRATION ROUTES        ###################"""
 

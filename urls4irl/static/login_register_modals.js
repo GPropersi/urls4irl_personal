@@ -60,3 +60,4 @@ $(document).ready(function() {
 
 });
 
+$(".page-holder").backstretch("splash.jpg");

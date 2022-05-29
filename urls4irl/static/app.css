@@ -1,22 +1,33 @@
-.page-holder {
-    min-height: 96vh;
-    
-    /* filter: grayscale(100%); */
-  }
-  
+html, body {
+    height: 100%;
+}
+
+.bg-img {
+    background: url("https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1740&q=80");
+    background-size: cover;
+    min-height: 380px;
+    position: relative;
+}
+
+.container-fluid {
+    padding-right: 0px;
+    padding-left: 0px;
+}
+
 .bg-cover {
-    background-size: cover !important;
-    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+    height: calc(100vh - 56px);
 }
 
-.splash-text {
-    box-sizing: border-box;
+.jumbotron {
     background: rgba(248, 248, 248, 0.74);
-    border: 5px solid #969696;
+    padding: 6rem 2rem;
 }
 
-
-.splash-text h1, p {
-    color: #000000;
-    font-weight: bold;
+.splash-button {
+    margin-top: 10px;
 }

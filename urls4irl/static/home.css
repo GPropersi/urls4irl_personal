@@ -35,6 +35,11 @@ span.tag {
     border-radius: 16px;
 }
 
+.url-card {
+    padding: 3px;
+    margin: 2px;
+}
+
 #UTubDeck {
     background: red;
 }
@@ -43,7 +48,7 @@ span.tag {
     background: orange;
 }
 
-#centerPanel {
+#centerPanel, .card {
     background: gray;
 }
 

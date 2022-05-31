@@ -18,6 +18,7 @@
                 <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
             {% else %}
                 <script src="{{ url_for('static', filename='utub_handler.js') }}"></script>
+                <meta name="csrf-token" content="{{ csrf_token() }}">
             {% endif %}
         {% endblock %}
         {% block addl_css %}
@@ -81,6 +82,7 @@
             <!-- NAV BAR -->
             <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
                 <a class="navbar-brand" href="#">URLS4IRL</a>
+                <span class="navbar-brand mx-3 c-user" id="{{current_user.get_id()}}" href="#">Welcome, {{current_user.username}}</span>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>

@@ -4,9 +4,6 @@
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-center flex-row">
-    <h1>Welcome  {{current_user.username}}</h1>
-</div>
 <script type="text/javascript">
     const userUtubs = JSON.parse('{{utubs_for_this_user|tojson|safe}}');
 </script>
@@ -27,173 +24,32 @@
             <!-- Will be alpha ordered -->
             <div id="TagDeck" class="col-12 col-lg-12 mb-md-1 p-3 panel">
                 <h2>Tags</h2>
-                <form>
-                    <label for="Economy">
-                        <input type="checkbox" id="Tag1" name="Economy">
-                        Economy
-                    </label>
-                    <label for="Flask">
-                        <input type="checkbox" id="Tag1" name="Flask" checked>
-                        Flask
-                    </label>
-                    <label for="Sports">
-                        <input type="checkbox" id="Tag3" name="Sports">
-                        Sports
-                    </label>
-                    <label for="Videos">
-                        <input type="checkbox" id="Tag2" name="Videos" checked>
-                        Videos
-                    </label>
-                    </label>
-                    <label for="YouTube">
-                        <input type="checkbox" id="Tag4" name="YouTube" checked>
-                        YouTube
-                    </label>
+                <form class="tagsForUtub">
+                    <!-- UTUB TAGS -->
                 </form>
             </div>
         </div>
 
-
         <!-- Center Panel -->
 
-        <div id="centerPanel" class="col-md-5 text-left order-2 order-md-1 mb-md-1 px-0 py-3 panel">
+        <div id="centerPanel" class="col-md-7 text-left order-2 order-md-1 mb-md-1 px-0 py-3 panel">
             <div class="row justify-content-center">
-                <div class="col-10 col-lg-8  mb-md-0">
-                    <h2>Web Development</h2>
-                    <p class="lead">
-                        This UTub is intended to hold links that help with the development of this website
-                        application.
-
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Quaerat, a!
-                    </p>
-                    <ul>
-                        <li>
-                            <a
-                                href="https://dba.stackexchange.com/questions/68266/what-is-the-best-way-to-store-an-email-address-in-postgresql">
-                                https://dba.stackexchange.com/questions/68266/what-is-the-best-way-to-store-an-email-address-in-postgresql</a>
-                            <span class="tag">StackExchange</span>
-                        </li>
-                        <li>
-                            <a href="https://blog.codinghorror.com/youre-probably-storing-passwords-incorrectly/">
-                                Hashing and salting necessary</a>
-                        </li>
-                        <li>
-                            <a href="https://www.freecodecamp.org/news/how-to-authenticate-users-in-flask/">
-                                Authentication in flask</a>
-                            <span class="tag">Flask</span>
-                        </li>
-                        <li>
-                            <a href="https://flask-sqlalchemy.palletsprojects.com/en/2.x/">
-                                Ease of life for flask + databases</a>
-                            <span class="tag">Flask</span>
-                        </li>
-                        <li>
-                            <a href="https://fmhelp.filemaker.com/help/18/fmp/en/index.html#page/FMP_Help/many-to-many-relationships.html">
-                                Many-to-many relationships (multiple users to multiple repos issue)</a>
-                        </li>
-                        <li>
-                            <a href="https://stackoverflow.com/questions/9789736/how-to-implement-a-many-to-many-relationship-in-postgresql">
-                                Many-to-many in postgresql</a>
-                            <span class="tag">StackOverflow</span>
-                        </li>
-                        <li>
-                            <a href="https://rapidapi.com/collection/profanity-filter">
-                                APIs to help us keep tags clean</a>
-                        </li>
-                        <li>
-                            <a href="https://dbdiagram.io/d/6209c1fa85022f4ee588a95f">
-                                Database Schema</a>
-                        </li>
-                        <li>
-                            <a href="https://realpython.com/python-virtual-environments-a-primer/#how-does-a-virtual-environment-work">
-                                Venv installer</a>
-                        </li>
-                        <li>
-                            <a href="https://www.youtube.com/watch?v=UXqiVe6h3lA">
-                                Flask + VSCode</a>
-                            <span class="tag">Flask</span>
-                            <span class="tag">Videos</span>
-                            <span class="tag">YouTube</span>
-                        </li>
-                        <li>
-                            <a href="https://www.youtube.com/watch?v=MwZwr5Tvyxo&list=PL-osiE80TeTs4UjLw5MM6OjgkjFeUxCYH">
-                                Excellent tutorial series for Flask</a>
-                            <span class="tag">Videos</span>
-                            <span class="tag">YouTube</span>
-                        </li>
-                        <li>
-                            <a href="https://testdriven.io/blog/flask-server-side-sessions/">
-                                Session storage, client vs server side
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="col-10 col-lg-8  mb-md-0">
-                    <h2>Cool Math</h2>
-                    <p class="lead">
-                        This UTub is intended to hold interesting math insights posted across the web.
-
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque, iste molestiae
-                        beatae, maiores deserunt
-                        in voluptatibus
-                        aspernatur architecto excepturi delectus soluta? Ipsa, deleniti dolorem hic consequatur
-                        repellat eveniet quidem
-                        voluptate necessitatibus dolorum delectus minus vitae, ut, veritatis sint ipsum magnam
-                        autem nam ex deserunt debitis
-                        eaque ratione! Nobis, quidem assumenda.
-                    </p>
-                    <ul>
-                        <li>
-                            <a href="https://www.youtube.com/watch?v=ltLUadnCyi0">
-                                https://www.youtube.com/watch?v=ltLUadnCyi0</a>
-                            <span class="tag">Videos</span>
-                            <span class="tag">YouTube</span>
-                        </li>
-                        <li>
-                            <a href="https://www.purplemath.com/modules/factnumb.htm">
-                                https://www.purplemath.com/modules/factnumb.htm
-                            </a>
-                            <span class="tag">Videos</span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="col-10 col-lg-8 mb-md-0">
-                    <h2>VSauce</h2>
-                    <p class="lead">
-                        This UTub is intended to hold all things VSauce.
-
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque, iste molestiae
-                        beatae, maiores deserunt
-                        in voluptatibus
-                        aspernatur architecto excepturi delectus soluta?
-                    </p>
-                    <ul>
-                        <li>
-                            <a href="https://www.youtube.com/watch?v=zHL9GP_B30E">
-                                https://www.youtube.com/watch?v=zHL9GP_B30E
-                            </a>
-                            <span class="tag">Videos</span>
-                            <span class="tag">YouTube</span>
-                        </li>
-                        <li>
-                            <a href="https://www.youtube.com/watch?v=VNqNnUJVcVs">
-                                https://www.youtube.com/watch?v=VNqNnUJVcVs
-                            </a>
-                            <span class="tag">Videos</span>
-                            <span class="tag">YouTube</span>
-                        </li>
-                        <li>
-                            <a
-                                href="https://twitter.com/tweetsauce?ref_src=twsrc%5Egoogle%7Ctwcamp%5Eserp%7Ctwgr%5Eauthor">
-                                https://twitter.com/tweetsauce?ref_src=twsrc%5Egoogle%7Ctwcamp%5Eserp%7Ctwgr%5Eauthor
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://en.wikipedia.org/wiki/Michael_Stevens_(educator)">
-                                https://en.wikipedia.org/wiki/Michael_Stevens_(educator)
-                            </a>
-                        </li>
-                    </ul>
+                <div class="col-11 col-lg-11 mb-md-0">
+                    <div class="row justify-content-center">
+                        <div class="col-10 col-lg-10 mb-md-0">
+                            <h2 class="utub-title">Web Development</h2>
+                        </div>
+                        <div class="col-2 col-lg-2 mb-md-0 text-right">
+                            <button type="button" class="btn btn-primary btn-lg btn-block add-url">
+                                Add a URL!
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="col-12 col-lg-12 mb-md-0 utub-holder">
+                            <!-- UTUB DATA HERE -->
+                        </div>
+                    </div> 
                 </div>
             </div>
         </div>
@@ -201,7 +57,7 @@
 
         <!-- Right Side Panel -->
 
-        <div id="rightPanel" class="col-md-5 order-3 order-md-3 panel">
+        <div id="rightPanel" class="col-md-3 order-3 order-md-3 panel">
             <div id="InfoDeck" class="col-12 col-lg-12 mb-md-1 p-3 panel">
 
                 <h2>Information</h2>

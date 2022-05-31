@@ -321,17 +321,33 @@ def add_user(utub_id: int):
 """#####################        URL INVOLVED ROUTES        ###################"""
 
 
-@app.route('/delete_url/<int:utub_id>/<int:url_id>', methods=["POST"])
+@app.route('/delete_url', methods=["POST"])
 @login_required
-def delete_url(utub_id: int, url_id: int):
+def delete_url():
     """
     User wants to delete a URL from a UTub. Only available to owner of that utub,
     or whoever added the URL into that Utub.
+
+    Intakes a JSON body as follows: {
+        'UTubID': int value for utub id,
+        'url_ID': int value for url id
+    }
 
     Args:
         utub_id (int): The ID of the UTub that contains the URL to be deleted
         url_id (int): The ID of the URL to be deleted
     """
+    print("Made it here.")
+    json_args = dict(request.get_json())
+
+    if not json_args or 'UTubID' not in json_args or 'url_ID' not in json_args:
+        flash("Something went wrong", category="danger")
+        return abort(404)
+    
+
+    utub_id = json_args.get('UTubID')
+    url_id = json_args.get('url_ID')
+
     utub = Utub.query.get(int(utub_id))
     owner_id = int(utub.created_by.id)
     

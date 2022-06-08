@@ -1,9 +1,13 @@
 $(document).ready(function() {
+    // On load, get all UTub data for current logged in user
     loadUtubData(userUtubs);
+
+    // Create UTub on button click
     $('.create-utub').click(function() {
         createUtub();
     });
     
+    // Update shown UTub info with selected on radio button selection
     $('.utub-names-ids').on('change', 'input[type=radio]', function(){
         let utubToLoad = $(this).val().replace("utub", "")
         $('.utub-holder').empty();
@@ -11,11 +15,19 @@ $(document).ready(function() {
         getUtubInfo(utubToLoad);
     });
 
+    // Delete a URL from a UTub on button click
     $(document).on('click', '.del-link', function() {
-        let linkToDelete = $(this).attr('id');
+        const linkToDelete = $(this).attr('id');
         deleteUtubLink(linkToDelete);
     });
 
+    // Add a tag to a URL on button click
+    $(document).on('click', '.add-tag', function() {
+        const linkToAddTagTo = $(this).attr('id');
+        console.log(linkToAddTagTo);
+    });
+
+    // Add a URL on button click
     $('.add-url').click(function() {
         let utubSelections = $('.utub-names-radios :radio');
         let selected = utubSelections.filter(found => utubSelections[found].checked)
@@ -24,7 +36,6 @@ $(document).ready(function() {
             let utubId = selected[0].id.replace('utub', '')
             addUrlToUtub(utubId, selected)
         }
-        // Call modal form to add a URL to this UTub
     });
 
     var csrftoken = $('meta[name=csrf-token]').attr('content')
@@ -155,7 +166,17 @@ function displayUtubData(utubData) {
                 innerUrlCard.append('<br>');
             };
 
+            let addTag = $('<a></a>').attr({
+                'class': 'btn btn-primary btn-sm py-0 px-5 add-tag',
+                'href': '#',
+                'id': utubData.id + '-' + url.url_id
+            });
+
+            addTag.html('Add Tag');
+            innerUrlCard.append(addTag);
+            
             // Check if URL was added by current user, or if the user was the creator of this UTub
+            // If so, they can delete the URL, so add a button for this
             if (currentUser == urlAdderID || currentUser == utubData.created_by) {
                 let deleteUrl = $('<a></a>').attr({
                     'class': 'btn btn-warning btn-sm py-0 del-link',

@@ -118,9 +118,9 @@ def register():
             return url_for('home')
 
         else:
-            data = json.dumps(register_form.errors, ensure_ascii=False)
+            registration_errors = json.dumps(register_form.errors, ensure_ascii=False)
             response_code = 422
-            return jsonify(data), response_code
+            return jsonify(registration_errors), response_code
 
 @app.route('/logout')
 def logout():
@@ -337,16 +337,21 @@ def delete_url():
         utub_id (int): The ID of the UTub that contains the URL to be deleted
         url_id (int): The ID of the URL to be deleted
     """
-    print("Made it here.")
     json_args = dict(request.get_json())
 
     if not json_args or 'UTubID' not in json_args or 'url_ID' not in json_args:
         flash("Something went wrong", category="danger")
         return abort(404)
     
-
     utub_id = json_args.get('UTubID')
     url_id = json_args.get('url_ID')
+
+    try:
+        utub_id = int(utub_id)
+        url_id = int(url_id)
+    except ValueError:
+        flash("Something went wrong", category="danger")
+        return abort(404)
 
     utub = Utub.query.get(int(utub_id))
     owner_id = int(utub.created_by.id)
@@ -387,7 +392,7 @@ def add_url(utub_id: int):
     """
     User wants to add URL to UTub. On success, adds the URL to the UTub.
     
-    Args:
+    On GET, requires Utub ID contained in the URL
         utub_id (int): The Utub to add this URL to
     """
     utub = Utub.query.get(int(utub_id))
@@ -406,8 +411,7 @@ def add_url(utub_id: int):
             validated_url = check_request_head(url_string)
         
         except InvalidURLError:
-            flash(f"Invalid URL.", category="danger")
-            return render_template('add_url_to_utub.html', utub_new_url_form=utub_new_url_form), 400
+            return jsonify({'Error': 'Invalid URL.'}), 400
 
         else: 
             # Get URL if already created
@@ -422,8 +426,7 @@ def add_url(utub_id: int):
                 #URL already generated, now confirm if within UTUB or not
                 if already_created_url in urls_in_utub:
                     # URL already in UTUB
-                    flash(f"URL already in UTub", category="info")
-                    return render_template('add_url_to_utub.html', utub_new_url_form=utub_new_url_form), 400
+                    return jsonify({'Error': 'URL already in UTub'}), 409
 
                 url_utub_user_add = Utub_Urls(utub_id=utub_id, url_id=already_created_url.id, user_id=int(current_user.get_id()))
 
@@ -437,10 +440,9 @@ def add_url(utub_id: int):
             db.session.add(url_utub_user_add)
             db.session.commit()
 
-            flash(f"Added {url_string} to {utub.name}", category="info")
-            return redirect(url_for('home', UTubID=utub_id))
+            return jsonify({'url': url_for('home'), 'utubID': utub_id}), 200
         
-    return render_template('add_url_to_utub.html', utub_new_url_form=utub_new_url_form)
+    return render_template('_add_url_form.html', utub_new_url_form=utub_new_url_form)
 
 """#####################        END URL INVOLVED ROUTES        ###################"""
 

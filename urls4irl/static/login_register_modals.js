@@ -1,3 +1,17 @@
+$(document).ready(function() {
+    $('.to_register').click(function() {
+        modalOpener("/register")
+    })
+
+    $('.to_login').click(function() {
+        modalOpener("/login")
+    })
+    $('.edit-modal-opener').click(function() {
+        var url = $(this).data('for-modal');
+        modalOpener(url)
+    });
+});
+
 function modalOpener(url) {
     $.get(url, function (data) {
         $('#Modal .modal-content').html(data);
@@ -45,16 +59,4 @@ function modalOpener(url) {
     })
 };
 
-$(document).ready(function() {
-    $('.to_register').click(function() {
-        modalOpener("/register")
-    })
 
-    $('.to_login').click(function() {
-        modalOpener("/login")
-    })
-    $('.edit-modal-opener').click(function() {
-        var url = $(this).data('for-modal');
-        modalOpener(url)
-    });
-});

@@ -1,24 +1,29 @@
 $(document).ready(function() {
-    loadUtubData(userUtubs)
+    loadUtubData(userUtubs);
     $('.create-utub').click(function() {
-        createUtub("/create_utub")
+        createUtub();
     });
     
     $('.utub-names-ids').on('change', 'input[type=radio]', function(){
         let utubToLoad = $(this).val().replace("utub", "")
-        $('.utub-holder').empty()
-        $('.tagsForUtub').empty()
-        getUtubInfo(utubToLoad)
+        $('.utub-holder').empty();
+        $('.tagsForUtub').empty();
+        getUtubInfo(utubToLoad);
     });
 
     $(document).on('click', '.del-link', function() {
         let linkToDelete = $(this).attr('id');
-        deleteUtubLink(linkToDelete)
+        deleteUtubLink(linkToDelete);
     });
 
     $('.add-url').click(function() {
-        let utubId = $('.utub-title').attr('name').replace('utub', '')
-        console.log("Trying to add a url to UTUB: " + utubId)
+        let utubSelections = $('.utub-names-radios :radio');
+        let selected = utubSelections.filter(found => utubSelections[found].checked)
+
+        if (!jQuery.isEmptyObject(selected)) {
+            let utubId = selected[0].id.replace('utub', '')
+            addUrlToUtub(utubId, selected)
+        }
         // Call modal form to add a URL to this UTub
     });
 
@@ -27,7 +32,7 @@ $(document).ready(function() {
         beforeSend: function(xhr, settings) {
             if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
                 xhr.setRequestHeader("X-CSRFToken", csrftoken);
-            }
+            };
         }
     });
 });
@@ -46,6 +51,11 @@ function loadUtubData(userUtubs) {
     };
 };
 
+/**
+ * Makes a GET request from backend to receive the selected UTub's data, sends to displayUtubData
+ * @function getUtubInfo
+ * @param {string} utubId - The ID of this UTub to receive data for
+ */
 function getUtubInfo(utubId) {
     let request = $.ajax({
         url: '/home?UTubID=' + utubId,
@@ -65,56 +75,114 @@ function getUtubInfo(utubId) {
     });
 };
 
+/**
+ * @function displayUtubData
+ * Parses and displays the received JSON data this user's selected UTub
+ * @param {JSON} utubData JSON data containing all UTub information for this user
+ */
 function displayUtubData(utubData) {
-    console.log(utubData)
     let name = utubData.name;
     let desc = utubData.description;
     let urls = utubData.urls;
     let tags = utubData.tags;
-    let members = utubData.members
-    let currentUser = $('.c-user').attr('id')
+    let members = utubData.members;
+    let currentUser = $('.c-user').attr('id');
 
-    $(".utub-title").text(name)
-    $(".utub-title").attr('name', 'utub' + utubData.id)
-    $(".utub-holder").append('<p class="lead">' + desc + '</p>')
+    $(".utub-title").text(name);
+    $(".utub-title").attr('name', 'utub' + utubData.id);
+    let utubDescription = $(".utub-description");
     
+    if (utubDescription.length == 0) {
+        utubDescription = $('<p></p>').addClass('lead').addClass('utub-description').html(desc);
+        $(".utub-holder").append(utubDescription);
+    }
+
+    const urlCards = $('.url-card');
+    const displayedUrlCards = urlCards.map(found => urlCards[found].id);
+    const displayedUrlCardsIDs = Object.values(displayedUrlCards)
+
     if (urls.length !== 0) {
+        $('.no-urls').remove();
         for (let url of urls) {
-            console.log(url)
+
+            // This URL is already displayed, therefore do not show it
+            if (displayedUrlCardsIDs.includes("url" + url.url_id)) {
+                continue;
+            };
+
             let urlAdderID = url.added_by
             let urlAdder = members.find(element => element.id === urlAdderID);
             let urlName = url.url_string;
             let urlTags = url.url_tags;
-            let urlCard = '<div class="card url-card" id="url' + url.url_id
-            urlCard += '"><div class="card-body url-card-body">'
-            urlCard += '<a class="card-title" href="' + urlName + '">'
-            urlCard += urlName + '</a>'
-            urlCard += '<p class="card-text">Added by: ' + urlAdder.username + '</p>'
-         
+            let urlCard = $('<div></div>').attr({
+                'class': "card url-card",
+                'id': "url" + url.url_id
+            });
+
+            let innerUrlCard = $('<div></div>').attr({
+                'class': "card-body url-card-body"
+            });
+            urlCard.append(innerUrlCard);
+
+            let urlLink = $('<a></a>').attr({
+                'class': 'card-title',
+                'href': '"' + urlName + '"',
+            });
+            urlLink.html(urlName);
+
+            let addedBy = $('<p></p>').attr({
+                'class': 'card-text'
+            });
+            addedBy.html('Added by: ' + urlAdder.username);
+
+            innerUrlCard.append(urlLink);
+            innerUrlCard.append(addedBy);
+            
+            // Check if url has tags, and if so, append the elements
             if (urlTags.length !== 0) {
-                urlCard += '<span class="card-text">Tags: </span>';
+                innerUrlCard.append($('<span>Tags: </span>').attr({
+                    'class': 'card-text'
+                }));
+
                 for (let urlTagID of urlTags) {
                     let tagName = tags.find(element => element.id === urlTagID);
-                    urlCard += '<span class="tag">' + tagName.tag_string + '</span>';
+                    let tagToAdd = $('<span></span>').attr({
+                        'class': 'tag'
+                    });
+                    tagToAdd.html(tagName.tag_string);
+                    innerUrlCard.append(tagToAdd);
                 };
-                urlCard += '<br>'
+                innerUrlCard.append('<br>');
             };
 
+            // Check if URL was added by current user, or if the user was the creator of this UTub
             if (currentUser == urlAdderID || currentUser == utubData.created_by) {
-                urlCard += '<a class="btn btn-warning btn-sm del-link" href="#" id="'
-                urlCard += utubData.id + "-" + url.url_id
-                urlCard += '">Remove</a>'
-            }
-            urlCard += '</div></div>'
+                let deleteUrl = $('<a></a>').attr({
+                    'class': 'btn btn-warning btn-sm py-0 del-link',
+                    'href': '#',
+                    'id': utubData.id + '-' + url.url_id
+                });
+
+                deleteUrl.html('Remove URL');
+                innerUrlCard.append(deleteUrl);
+            };
+
             $(".utub-holder").append(urlCard);
         };
     } else {
-        $(".utub-holder").append('<h4>No URLs found. Add one!</h4>');
+        const utubHolder= $(".utub-holder");
+        const noURLs = $('<h4></h4>').addClass('no-urls').append('<h4>No URLs found. Add one!</h4>');
+        utubHolder.append(noURLs);
     };
 
     displayTags(tags);
 };
 
+/**
+ * @function deleteUtubLink
+ * Sends a JSON as a POST request to delete the signified URL from the given UTub
+ * @param {string} urlToDel - A string containing the UTub ID and URL ID, split by '-'
+ */
 function deleteUtubLink(urlToDel) {
     const utubAndUrl = urlToDel.split('-');
     const utub = utubAndUrl[0];
@@ -129,12 +197,19 @@ function deleteUtubLink(urlToDel) {
         type: 'POST',
         dataType: 'json',
         data: JSON.stringify(urlToDelete),
-    })
+    });
 
     request.done(function(xml, textStatus, xhr) {
         if (xhr.status == 200) {
-            let cardToDel = '#url' + url
-            $(cardToDel).remove()
+            let cardToDel = '#url' + url;
+            $(cardToDel).remove();
+
+            const urlCards = $('.url-card');
+            if (urlCards.length === 0) {
+                const utubHolder= $(".utub-holder");
+                const noURLs = $('<h4></h4>').addClass('no-urls').append('<h4>No URLs found. Add one!</h4>');
+                utubHolder.append(noURLs);
+            }
         };
     });
 
@@ -144,73 +219,150 @@ function deleteUtubLink(urlToDel) {
     });
 };
 
+/**
+ * @function displayTags
+ * Displays the tags for the selected UTub
+ * @param {Array} utubTags - The tags for this UTub, stored in a string
+ */
 function displayTags(utubTags) {
+    let utubTagsForm = $(".tagsForUtub");
+    $('.no-tags').remove();
     if (utubTags.length === 0) {
-        $(".tagsForUtub").append('<h4>No tags in this UTub. Add some!</h4>');
+        const noTags = $('<h4></h4>').addClass('no-tags').html('No tags in this UTub. Add some!');
+        utubTagsForm.append(noTags);
     } else {
         for (let tag of utubTags) {
-            let tagName = tag.tag_string
-            let tagID = tag.id
-            let htmlLabel = '<label for="' + tagName + '">'
-            let htmlInput = '<input type="checkbox" id="' + tagID + '" name="'
-            htmlInput += tagName
-            htmlInput += '">  ' + tagName
-            htmlLabel += htmlInput + '</label>'
+            let tagName = tag.tag_string;
+            let tagID = tag.id;
 
-            $(".tagsForUtub").append(htmlLabel)
-        }
+            let tagLabel = $('<label></label>').attr({
+                'for': tagName,
+                'class': 'form-check-label'
+            });
+            tagLabel.html(tagName);
+
+            let tagCheckbox = $('<input>').attr({
+                'type': 'checkbox',
+                'id': tagName,
+                'name': tagName,
+                'value': tagID,
+                'class': 'form-check-input'
+            });
+
+            let newTag = $('<div></div>');
+            newTag.addClass('form-check');
+            newTag.append(tagCheckbox);
+            newTag.append(tagLabel);
+            utubTagsForm.append(newTag);
+        };
     };
 };
 
+/**
+ * @function putUtubNames
+ * Puts down the UTub names this user is a part of, as part of a selection of radio buttons
+ * Saves the first UTub's id to return later as part of a post request to display the first 
+ * UTub's data
+ * @param {Array} utubNames - Array of UTub contained originally from a JSON
+ * @returns {String}
+ */
 function putUtubNames(utubNames) {
     let firstUtubId = null;
     for (let index = 0; index < utubNames.length; ++index) {
         let utub_id = utubNames[index][0];
         let utub_name = utubNames[index][1];
-        let checked;
+
+        let utubRadio = $('<input>');
+        utubRadio.addClass('form-check-input');
+        utubRadio.attr({
+            'type': 'radio',
+            'name': 'utub-name',
+            'id': 'utub' + utub_id,
+            'value': 'utub' + utub_id
+        });
 
         if (index === 0) {
-            checked = 'checked';
-            firstUtubId = utub_id
-        } else {
-            checked = '';
-        }
-        let $input = $('<input class="form-check-input" type="radio" name="utub-name" id="utub' + utub_id + '" value="utub' + utub_id + '" '+ checked + '>');
-        let $label = $('<label class="form-check-label" for="utub' + utub_id + '"><b>' + utub_name + '</b></label>');
+            utubRadio.prop('checked', true);
+            firstUtubId = utub_id;
+        };
         
-        $(".utub-names-ids").append('<div class="form-check utub-names-radios">');
-        $(".utub-names-ids").append($input);
-        $(".utub-names-ids").append($label);
-        $(".utub-names-ids").append('</div>');
-    }
-    return firstUtubId
-}
 
-function createUtub(url) {
-    $.get(url, function (formHtml) {
+        let utubLabel = $('<label></label>');
+        utubLabel.addClass('form-check-label');
+        utubLabel.attr({'for': 'utub' + utub_id});
+        utubLabel.html('<b>' + utub_name + '</b>');
+        
+        let newUtubNameDiv = $('<div></div>');
+        newUtubNameDiv.addClass('utub-names-radios');
+
+        newUtubNameDiv.append(utubRadio);
+        newUtubNameDiv.append(utubLabel);
+        $(".utub-names-ids").append(newUtubNameDiv);
+    };
+    return firstUtubId;
+};
+
+/**
+ * @function createUtub
+ * Sends a post request to create a UTub with the given information, via a modal
+ */
+function createUtub() {
+    $.get("/create_utub", function (formHtml) {
         $('#Modal .modal-content').html(formHtml);
         $('#Modal').modal();
         $('#submit').click(function (event) {
             event.preventDefault();
             let request = $.ajax({
-                url: url,
+                url: "/create_utub",
                 type: "POST",
                 data: $('#ModalForm').serialize(),
             });
 
             request.done(function(url_home, textStatus, xhr) {
                 if (xhr.status == 200) {
-                    $('#Modal').modal('hide')
-                    window.location = url_home
-                }
-            })
+                    $('#Modal').modal('hide');
+                    window.location = url_home;
+                };
+            });
         
             request.fail(function(xhr, textStatus, error) {
-                console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus)
-                console.log("Error: " + error)
+                console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+                console.log("Error: " + error);
             })
         });
-    })
+    });
 };
 
+function addUrlToUtub(utub_id, radio_button) {
+    $.get("/add_url/" + utub_id, function (formHtml) {
+        $('#Modal .modal-content').html(formHtml);
+        $('#Modal').modal();
+        $('#submit').click(function (event) {
+            event.preventDefault();
+            $('.modal-flasher').prop({'hidden': true});
+            let request = $.ajax({
+                url: "/add_url/" + utub_id,
+                type: "POST",
+                data: $('#ModalForm').serialize(),
+            });
 
+            request.done(function(add_url_success, textStatus, xhr) {
+                if (xhr.status == 200) {
+                    $('#Modal').modal('hide');
+                    // window.location = add_url_success.url;
+                    getUtubInfo(add_url_success.utubID)
+                };
+            });
+        
+            request.fail(function(xhr, textStatus, error) {
+                if (xhr.status == 409 || xhr.status == 400) {
+                    $('.modal-flasher').prop({'hidden': false});
+                    $('.modal-flasher').html(xhr.responseJSON.Error)
+
+                }
+                console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+                console.log("Error: " + error);
+            })
+        });
+    });
+};

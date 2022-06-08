@@ -40,6 +40,11 @@ span.tag {
     margin: 2px;
 }
 
+.del-link {
+    margin-top: 5px;
+}
+
+
 #UTubDeck {
     background: red;
 }

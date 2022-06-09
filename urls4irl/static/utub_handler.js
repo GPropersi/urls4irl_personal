@@ -333,6 +333,7 @@ function createUtub() {
         $('#Modal').modal();
         $('#submit').click(function (event) {
             event.preventDefault();
+            $('.modal-flasher').prop({'hidden': true});
             let request = $.ajax({
                 url: "/create_utub",
                 type: "POST",
@@ -347,6 +348,23 @@ function createUtub() {
             });
         
             request.fail(function(xhr, textStatus, error) {
+                if (xhr.status == 409) {
+                    const flashMessage = xhr.responseJSON.Error;
+                    const flashCategory = xhr.responseJSON.Category;
+
+                    let flashElem = flashMessageBanner(flashMessage, flashCategory)
+                    flashElem.insertBefore('#modal-body').show();
+                } else if (xhr.status == 404) {
+                    $('.invalid-feedback').remove();
+                    $('.alert').remove();
+                    $('.form-control').removeClass('is-invalid');
+                    const error = JSON.parse(xhr.responseJSON);
+                    for (var key in error) {
+                        $('<div class="invalid-feedback"><span>' + error[key] + '</span></div>' )
+                        .insertAfter('#' + key).show();
+                        $('#' + key).addClass('is-invalid');
+                    };
+                };
                 console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
                 console.log("Error: " + error);
             })
@@ -370,20 +388,61 @@ function addUrlToUtub(utub_id, radio_button) {
             request.done(function(add_url_success, textStatus, xhr) {
                 if (xhr.status == 200) {
                     $('#Modal').modal('hide');
-                    // window.location = add_url_success.url;
                     getUtubInfo(add_url_success.utubID)
-                };
+                }; 
             });
         
             request.fail(function(xhr, textStatus, error) {
                 if (xhr.status == 409 || xhr.status == 400) {
-                    $('.modal-flasher').prop({'hidden': false});
-                    $('.modal-flasher').html(xhr.responseJSON.Error)
+                    const flashMessage = xhr.responseJSON.Error;
+                    const flashCategory = xhr.responseJSON.Category;
 
-                }
+                    let flashElem = flashMessageBanner(flashMessage, flashCategory)
+                    flashElem.insertBefore('#modal-body').show();
+                } else if (xhr.status == 404) {
+                    $('.invalid-feedback').remove();
+                    $('.alert').remove();
+                    $('.form-control').removeClass('is-invalid');
+                    const error = JSON.parse(xhr.responseJSON);
+                    for (var key in error) {
+                        $('<div class="invalid-feedback"><span>' + error[key] + '</span></div>' )
+                        .insertAfter('#' + key).show();
+                        $('#' + key).addClass('is-invalid');
+                    };
+                }; 
                 console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
                 console.log("Error: " + error);
             })
         });
     });
 };
+
+/**
+ * @function flashMessageBanner
+ * Creates a banner that flashes a message. Can be inserted wherever chosen.
+ * @param {string} message - The message to display
+ * @param {string} category - The type of banner based on bootstrap class
+ * @returns An HTML div element that is displayed with a message and given the prescribed category
+ */
+function flashMessageBanner(message, category) {
+    const flashElem = $('<div></div>').addClass('alert');
+    flashElem.addClass('alert-dismissible');
+    flashElem.addClass('alert-' + category);
+    flashElem.addClass('fade').addClass('show');
+
+    flashElem.attr({
+        'role':'alert'
+    });
+
+    flashElem.text(message)
+
+    const closeButton = $('<button></button>').addClass('close').attr({
+        'data-dismiss': 'alert',
+        'aria-label': 'Close'
+    });
+    closeButton.append('<span aria-hidden="false">&times;</span>');
+
+    flashElem.append(closeButton)
+    flashElem.css("margin-bottom", "0rem")
+    return flashElem
+}

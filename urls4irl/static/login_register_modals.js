@@ -1,15 +1,17 @@
 $(document).ready(function() {
-    $('.to_register').click(function() {
+    $('.to_register').off('click').on('click', function() {
         modalOpener("/register")
     })
 
-    $('.to_login').click(function() {
+    $('.to_login').off('click').on('click', function() {
         modalOpener("/login")
     })
+
     $('.edit-modal-opener').click(function() {
         var url = $(this).data('for-modal');
         modalOpener(url)
     });
+    
 });
 
 function modalOpener(url) {
@@ -58,5 +60,3 @@ function modalOpener(url) {
         });
     })
 };
-
-

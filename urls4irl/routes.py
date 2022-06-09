@@ -67,6 +67,8 @@ def home():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
     login_form = LoginForm()
 
     if request.method == 'GET':
@@ -100,6 +102,9 @@ def login():
         
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+
     register_form = UserRegistrationForm()
 
     if request.method == 'GET':
@@ -119,8 +124,7 @@ def register():
 
         else:
             registration_errors = json.dumps(register_form.errors, ensure_ascii=False)
-            response_code = 422
-            return jsonify(registration_errors), response_code
+            return jsonify(registration_errors), 422
 
 @app.route('/logout')
 def logout():
@@ -144,19 +148,39 @@ def create_utub():
 
     utub_form = UTubForm()
 
-    if utub_form.validate_on_submit():
-        name = utub_form.name.data
-        description = utub_form.description.data
-        new_utub = Utub(name=name, utub_creator=current_user.get_id(), utub_description=description)
-        creator_to_utub = Utub_Users()
-        creator_to_utub.to_user = current_user
-        new_utub.members.append(creator_to_utub)
-        db.session.commit()
-        flash(f"Successfully made your UTub named {name}", category="success")
-        return url_for('home')
+    if request.method == 'GET':
+        return render_template('_create_utub_form.html', utub_form=utub_form)
+    
+    else:
+        if utub_form.validate_on_submit():
+            name = utub_form.name.data
+            description = utub_form.description.data
 
-    flash("Okay let's get you a new UTub!", category="primary")
-    return render_template('_create_utub_form.html', utub_form=utub_form)
+            # Get all utubs current user is in
+            utub_details = current_user.serialized_on_initial_load
+            if len(utub_details) > 0:
+                utub_names = set([val['name'] for val in utub_details])
+                
+                if name in utub_names:
+                    error = {
+                        'Error': 'You are already a part of a UTub with that name.',
+                        'Category': 'danger'
+                    }
+                return jsonify(error), 409
+            
+            new_utub = Utub(name=name, utub_creator=current_user.get_id(), utub_description=description)
+            creator_to_utub = Utub_Users()
+            creator_to_utub.to_user = current_user
+            new_utub.members.append(creator_to_utub)
+            db.session.commit()
+            flash(f"Successfully made your UTub named {name}", category="success")
+            return url_for('home')
+        
+        else:
+            creation_utub_errors = json.dumps(utub_form.errors, ensure_ascii=False)
+            return jsonify(creation_utub_errors), 404
+
+    
 
 @app.route('/delete_utub/<int:utub_id>', methods=["POST"])
 @login_required
@@ -404,45 +428,54 @@ def add_url(utub_id: int):
 
     utub_new_url_form = UTubNewURLForm()
 
-    if utub_new_url_form.validate_on_submit():
-        url_string = utub_new_url_form.url_string.data
+    if request.method == 'GET':
+        return render_template('_add_url_form.html', utub_new_url_form=utub_new_url_form)
+    
+    else:
+        if utub_new_url_form.validate_on_submit():
+            url_string = utub_new_url_form.url_string.data
 
-        try:
-            validated_url = check_request_head(url_string)
-        
-        except InvalidURLError:
-            return jsonify({'Error': 'Invalid URL.'}), 400
-
-        else: 
-            # Get URL if already created
-            print(f"Validated URL: {validated_url}")
-            already_created_url = URLS.query.filter_by(url_string=validated_url).first()
-
-            if already_created_url:
-
-                # Get all urls currently in utub
-                urls_in_utub = [utub_user_url_object.url_in_utub for utub_user_url_object in utub.utub_urls]
+            try:
+                validated_url = check_request_head(url_string)
             
-                #URL already generated, now confirm if within UTUB or not
-                if already_created_url in urls_in_utub:
-                    # URL already in UTUB
-                    return jsonify({'Error': 'URL already in UTub'}), 409
+            except InvalidURLError:
+                return jsonify({
+                    'Error': 'Invalid URL.',
+                    'Category': 'danger'}), 400
 
-                url_utub_user_add = Utub_Urls(utub_id=utub_id, url_id=already_created_url.id, user_id=int(current_user.get_id()))
+            else: 
+                # Get URL if already created
+                print(f"Validated URL: {validated_url}")
+                already_created_url = URLS.query.filter_by(url_string=validated_url).first()
 
-            else:
-                # Else create new URL and append to the UTUB
-                new_url = URLS(url_string=validated_url, created_by=int(current_user.get_id()))
-                db.session.add(new_url)
-                db.session.commit()
-                url_utub_user_add = Utub_Urls(utub_id=utub_id, url_id=new_url.id, user_id=int(current_user.get_id()))
+                if already_created_url:
+
+                    # Get all urls currently in utub
+                    urls_in_utub = [utub_user_url_object.url_in_utub for utub_user_url_object in utub.utub_urls]
                 
-            db.session.add(url_utub_user_add)
-            db.session.commit()
+                    #URL already generated, now confirm if within UTUB or not
+                    if already_created_url in urls_in_utub:
+                        # URL already in UTUB
+                        return jsonify({'Error': 'URL already in UTub'}), 409
 
-            return jsonify({'url': url_for('home'), 'utubID': utub_id}), 200
+                    url_utub_user_add = Utub_Urls(utub_id=utub_id, url_id=already_created_url.id, user_id=int(current_user.get_id()))
+
+                else:
+                    # Else create new URL and append to the UTUB
+                    new_url = URLS(url_string=validated_url, created_by=int(current_user.get_id()))
+                    db.session.add(new_url)
+                    db.session.commit()
+                    url_utub_user_add = Utub_Urls(utub_id=utub_id, url_id=new_url.id, user_id=int(current_user.get_id()))
+                    
+                db.session.add(url_utub_user_add)
+                db.session.commit()
+
+                return jsonify({'url': url_for('home'), 'utubID': utub_id}), 200
+        else:
+            url_errors = json.dumps(utub_new_url_form.errors, ensure_ascii=False)
+            return jsonify(url_errors), 404
         
-    return render_template('_add_url_form.html', utub_new_url_form=utub_new_url_form)
+    
 
 """#####################        END URL INVOLVED ROUTES        ###################"""
 

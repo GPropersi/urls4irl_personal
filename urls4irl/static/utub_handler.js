@@ -11,7 +11,8 @@ $(document).ready(function() {
     $('.utub-names-ids').on('change', 'input[type=radio]', function(){
         let utubToLoad = $(this).val().replace("utub", "")
         $('.utub-holder').empty();
-        $('.tagsForUtub').empty();
+        $('.tags-for-utub').empty();
+        $('.members-holder').empty();
         getUtubInfo(utubToLoad);
     });
 
@@ -197,47 +198,20 @@ function displayUtubData(utubData) {
     };
 
     displayTags(tags);
+    displayMembers(members, utubData.created_by);
 };
 
-/**
- * @function deleteUtubLink
- * Sends a JSON as a POST request to delete the signified URL from the given UTub
- * @param {string} urlToDel - A string containing the UTub ID and URL ID, split by '-'
- */
-function deleteUtubLink(urlToDel) {
-    const utubAndUrl = urlToDel.split('-');
-    const utub = utubAndUrl[0];
-    const url = utubAndUrl[1];
-    var urlToDelete = new Object();
-    urlToDelete.UTubID = utub;
-    urlToDelete.url_ID = url;
-    
-    let request = $.ajax({
-        url: '/delete_url',
-        contentType: "application/json",
-        type: 'POST',
-        dataType: 'json',
-        data: JSON.stringify(urlToDelete),
-    });
-
-    request.done(function(xml, textStatus, xhr) {
-        if (xhr.status == 200) {
-            let cardToDel = '#url' + url;
-            $(cardToDel).remove();
-
-            const urlCards = $('.url-card');
-            if (urlCards.length === 0) {
-                const utubHolder= $(".utub-holder");
-                const noURLs = $('<h4></h4>').addClass('no-urls').append('<h4>No URLs found. Add one!</h4>');
-                utubHolder.append(noURLs);
-            }
-        };
-    });
-
-    request.fail(function(xhr, textStatus, error) {
-        console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
-        console.log("Error: " + error);
-    });
+function displayMembers(utubMembers, currentUser, creator) {
+    const memberDeck = $('.members-holder');
+    for (let member of utubMembers) {
+        let memberCard = $('<div></div>').addClass('card');
+        let memberCardBody = $('<div></div>').addClass('card-body');
+        memberCardBody.text(member.username);
+        memberCard.append(memberCardBody);
+        
+        memberDeck.append(memberCard);
+        memberCard.css("height", "4rem");
+    };
 };
 
 /**
@@ -246,7 +220,7 @@ function deleteUtubLink(urlToDel) {
  * @param {Array} utubTags - The tags for this UTub, stored in a string
  */
 function displayTags(utubTags) {
-    let utubTagsForm = $(".tagsForUtub");
+    let utubTagsForm = $(".tags-for-utub");
     $('.no-tags').remove();
     if (utubTags.length === 0) {
         const noTags = $('<h4></h4>').addClass('no-tags').html('No tags in this UTub. Add some!');
@@ -372,7 +346,12 @@ function createUtub() {
     });
 };
 
-function addUrlToUtub(utub_id, radio_button) {
+/**
+ * @function addUrlToUtub
+ * Adds a URL to a UTub via AJAX request
+ * @param {string} utub_id - The ID for the UTub to generate a URL for
+ */
+function addUrlToUtub(utub_id) {
     $.get("/add_url/" + utub_id, function (formHtml) {
         $('#Modal .modal-content').html(formHtml);
         $('#Modal').modal();
@@ -414,6 +393,47 @@ function addUrlToUtub(utub_id, radio_button) {
                 console.log("Error: " + error);
             })
         });
+    });
+};
+
+/**
+ * @function deleteUtubLink
+ * Sends a JSON as a POST request to delete the signified URL from the given UTub
+ * @param {string} urlToDel - A string containing the UTub ID and URL ID, split by '-'
+ */
+ function deleteUtubLink(urlToDel) {
+    const utubAndUrl = urlToDel.split('-');
+    const utub = utubAndUrl[0];
+    const url = utubAndUrl[1];
+    var urlToDelete = new Object();
+    urlToDelete.UTubID = utub;
+    urlToDelete.url_ID = url;
+    
+    let request = $.ajax({
+        url: '/delete_url',
+        contentType: "application/json",
+        type: 'POST',
+        dataType: 'json',
+        data: JSON.stringify(urlToDelete),
+    });
+
+    request.done(function(xml, textStatus, xhr) {
+        if (xhr.status == 200) {
+            let cardToDel = '#url' + url;
+            $(cardToDel).remove();
+
+            const urlCards = $('.url-card');
+            if (urlCards.length === 0) {
+                const utubHolder= $(".utub-holder");
+                const noURLs = $('<h4></h4>').addClass('no-urls').append('<h4>No URLs found. Add one!</h4>');
+                utubHolder.append(noURLs);
+            }
+        };
+    });
+
+    request.fail(function(xhr, textStatus, error) {
+        console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+        console.log("Error: " + error);
     });
 };
 

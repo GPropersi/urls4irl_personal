@@ -180,8 +180,6 @@ def create_utub():
             creation_utub_errors = json.dumps(utub_form.errors, ensure_ascii=False)
             return jsonify(creation_utub_errors), 404
 
-    
-
 @app.route('/delete_utub/<int:utub_id>', methods=["POST"])
 @login_required
 def delete_utub(utub_id: int):
@@ -343,8 +341,6 @@ def add_user(utub_id: int):
 """#####################        END USER INVOLVED ROUTES        ###################"""
 
 """#####################        URL INVOLVED ROUTES        ###################"""
-
-
 @app.route('/delete_url', methods=["POST"])
 @login_required
 def delete_url():
@@ -408,7 +404,6 @@ def delete_url():
     else:
         flash("Can only delete URLs you added, or if you are the creator of this UTub.", category="danger")
         return home(), 403
-
 
 @app.route('/add_url/<int:utub_id>', methods=["GET", "POST"])
 @login_required
@@ -475,8 +470,6 @@ def add_url(utub_id: int):
             url_errors = json.dumps(utub_new_url_form.errors, ensure_ascii=False)
             return jsonify(url_errors), 404
         
-    
-
 """#####################        END URL INVOLVED ROUTES        ###################"""
 
 """#####################        TAG INVOLVED ROUTES        ###################"""

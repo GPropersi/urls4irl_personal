@@ -129,10 +129,13 @@ function displayUtubData(utubData) {
     let tags = utubData.tags;
     let members = utubData.members;
     let currentUser = $('.c-user').attr('id');
+    $('.utub-description').remove();
+    $('.url-card').remove();
 
     $(".utub-title").text(name);
     $(".utub-title").attr('name', 'utub' + utubData.id);
     let utubDescription = $(".utub-description");
+    
     
     if (utubDescription.length == 0) {
         utubDescription = $('<p></p>').addClass('lead').addClass('utub-description').html(desc);
@@ -347,7 +350,7 @@ function addMemberToUtub(utub_id) {
         $('#Modal').modal();
         $('#submit').click(function (event) {
             event.preventDefault();
-            $('.modal-flasher').prop({'hidden': true});
+            // $('.modal-flasher').prop({'hidden': true});
             $('.invalid-feedback').remove();
             $('.alert').remove();
             $('.form-control').removeClass('is-invalid');
@@ -483,26 +486,49 @@ function createUtub() {
         $('#Modal').modal();
         $('#submit').click(function (event) {
             event.preventDefault();
-            $('.modal-flasher').prop({'hidden': true});
+            // $('.modal-flasher').prop({'hidden': true});
             let request = $.ajax({
                 url: "/create_utub",
                 type: "POST",
                 data: $('#ModalForm').serialize(),
             });
 
-            request.done(function(url_home, textStatus, xhr) {
+            request.done(function(response, textStatus, xhr) {
                 if (xhr.status == 200) {
                     $('#Modal').modal('hide');
-                    window.location = url_home;
+                    const flashElem = flashMessageBanner(response.message, response.category);
+                    flashElem.insertBefore($('.main-content'));
+                    
+                    let utubRadio = $('<input>');
+                    utubRadio.addClass('form-check-input');
+                    utubRadio.attr({
+                        'type': 'radio',
+                        'name': 'utub-name',
+                        'id': 'utub' + response.UTubID,
+                        'value': 'utub' + response.UTubID
+                    });
+                    let utubLabel = $('<label></label>');
+                    utubLabel.addClass('form-check-label');
+                    utubLabel.attr({'for': 'utub' + response.UTubID});
+                    utubLabel.html('<b>' + response.UTub_Name + '</b>');
+                    
+                    let newUtubNameDiv = $('<div></div>');
+                    newUtubNameDiv.addClass('utub-names-radios');
+            
+                    newUtubNameDiv.append(utubRadio);
+                    newUtubNameDiv.append(utubLabel);
+                    $(".utub-names-ids").append(newUtubNameDiv);
+                    utubRadio.prop('checked', true);
+                    getUtubInfo(response.UTubID);
                 };
             });
         
             request.fail(function(xhr, textStatus, error) {
                 if (xhr.status == 409) {
-                    const flashMessage = xhr.responseJSON.Error;
-                    const flashCategory = xhr.responseJSON.Category;
+                    const flashMessage = xhr.responseJSON.error;
+                    const flashCategory = xhr.responseJSON.category;
 
-                    let flashElem = flashMessageBanner(flashMessage, flashCategory)
+                    let flashElem = flashMessageBanner(flashMessage, flashCategory);
                     flashElem.insertBefore('#modal-body').show();
                 } else if (xhr.status == 404) {
                     $('.invalid-feedback').remove();
@@ -533,7 +559,7 @@ function addUrlToUtub(utub_id) {
         $('#Modal').modal();
         $('#submit').click(function (event) {
             event.preventDefault();
-            $('.modal-flasher').prop({'hidden': true});
+            // $('.modal-flasher').prop({'hidden': true});
             $('.invalid-feedback').remove();
             $('.alert').remove();
             $('.form-control').removeClass('is-invalid');
@@ -596,11 +622,16 @@ function addUrlToUtub(utub_id) {
         data: JSON.stringify(urlToDelete),
     });
 
-    request.done(function(xml, textStatus, xhr) {
+    request.done(function(response, textStatus, xhr) {
         if (xhr.status == 200) {
             let cardToDel = '#url' + url;
             $(cardToDel).remove();
 
+            // Flash success on delete of URL
+            const flashElem = flashMessageBanner(response.message, response.category)
+            flashElem.insertBefore($('.main-content'))
+
+            // Remove URL card
             const urlCards = $('.url-card');
             if (urlCards.length === 0) {
                 const utubHolder= $(".utub-holder");
@@ -624,16 +655,17 @@ function addUrlToUtub(utub_id) {
  * @returns An HTML div element that is displayed with a message and given the prescribed category
  */
 function flashMessageBanner(message, category) {
+    $('.flash-message').remove()
     const flashElem = $('<div></div>').addClass('alert');
     flashElem.addClass('alert-dismissible');
     flashElem.addClass('alert-' + category);
-    flashElem.addClass('fade').addClass('show');
+    flashElem.addClass('fade').addClass('show').addClass('flash-message');
 
     flashElem.attr({
         'role':'alert'
     });
 
-    flashElem.text(message)
+    flashElem.text(message);
 
     const closeButton = $('<button></button>').addClass('close').attr({
         'data-dismiss': 'alert',
@@ -641,7 +673,7 @@ function flashMessageBanner(message, category) {
     });
     closeButton.append('<span aria-hidden="false">&times;</span>');
 
-    flashElem.append(closeButton)
-    flashElem.css("margin-bottom", "0rem")
-    return flashElem
-}
+    flashElem.append(closeButton);
+    flashElem.css("margin-bottom", "0rem");
+    return flashElem;
+};

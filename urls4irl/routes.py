@@ -151,34 +151,42 @@ def create_utub():
     if request.method == 'GET':
         return render_template('_create_utub_form.html', utub_form=utub_form)
     
-    else:
-        if utub_form.validate_on_submit():
-            name = utub_form.name.data
-            description = utub_form.description.data
+    
+    if utub_form.validate_on_submit():
+        name = utub_form.name.data
+        description = utub_form.description.data
 
-            # Get all utubs current user is in
-            utub_details = current_user.serialized_on_initial_load
-            if len(utub_details) > 0:
-                utub_names = set([val['name'] for val in utub_details])
-                
-                if name in utub_names:
-                    error = {
-                        'Error': 'You are already a part of a UTub with that name.',
-                        'Category': 'danger'
-                    }
-                return jsonify(error), 409
+        # Get all utubs current user is in
+        utub_details = current_user.serialized_on_initial_load
+        if len(utub_details) > 0:
+            utub_names = set([val['name'] for val in utub_details])
             
-            new_utub = Utub(name=name, utub_creator=current_user.get_id(), utub_description=description)
-            creator_to_utub = Utub_Users()
-            creator_to_utub.to_user = current_user
-            new_utub.members.append(creator_to_utub)
-            db.session.commit()
-            flash(f"Successfully made your UTub named {name}", category="success")
-            return url_for('home')
+            if name in utub_names:
+                error = {
+                    'error': 'You are already a part of a UTub with that name.',
+                    'category': 'danger'
+                }
+
+                return jsonify(error), 409
         
-        else:
-            creation_utub_errors = json.dumps(utub_form.errors, ensure_ascii=False)
-            return jsonify(creation_utub_errors), 404
+        new_utub = Utub(name=name, utub_creator=current_user.get_id(), utub_description=description)
+        creator_to_utub = Utub_Users()
+        creator_to_utub.to_user = current_user
+        new_utub.members.append(creator_to_utub)
+        db.session.commit()
+
+        success = {
+            'message': f'Successfully made your UTub named {name}',
+            'category': 'success',
+            'UTubID': f'{new_utub.id}',
+            'UTub_Name': f'{name}'
+        }
+        flash(f"Successfully made your UTub named {name}", category="success")
+        return jsonify(success), 200
+    
+    else:
+        creation_utub_errors = json.dumps(utub_form.errors, ensure_ascii=False)
+        return jsonify(creation_utub_errors), 404
 
 @app.route('/delete_utub/<int:utub_id>', methods=["POST"])
 @login_required
@@ -310,6 +318,7 @@ def delete_user():
     
     current_utub.members.remove(user_to_delete_in_utub)
     db.session.commit()
+    flash("Removed user", category="danger")
 
     return jsonify({
         'Result': 'Success',
@@ -420,8 +429,13 @@ def delete_url():
 
         db.session.delete(utub_url_user_row[0])
         db.session.commit()
+
+        delete_success = {
+            'message': 'You successfully deleted the URL from the UTub.',
+            'category': 'success'
+        }
         flash("You successfully deleted the URL from the UTub.", category="danger")
-        return redirect(url_for('home', UTubID=utub_id))
+        return jsonify(delete_success), 200
 
     else:
         flash("Can only delete URLs you added, or if you are the creator of this UTub.", category="danger")

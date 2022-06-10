@@ -35,9 +35,34 @@ $(document).ready(function() {
 
         if (!jQuery.isEmptyObject(selected)) {
             let utubId = selected[0].id.replace('utub', '')
-            addUrlToUtub(utubId, selected)
+            addUrlToUtub(utubId)
         }
     });
+
+    // Add a member on button click
+    $(document).on('click', '.add-user', function() {
+        let utubSelections = $('.utub-names-radios :radio');
+        let selected = utubSelections.filter(found => utubSelections[found].checked)
+
+        console.log('selected add user')
+        if (!jQuery.isEmptyObject(selected)) {
+            let utubId = selected[0].id.replace('utub', '')
+            addMemberToUtub(utubId, selected)
+        }
+    });
+
+    // Remove member on button click
+    $(document).on('click', '.remove-user', function () {
+        let userToRemove = $(this).attr('id').replace('user', '');
+
+        let utubSelections = $('.utub-names-radios :radio');
+        let selected = utubSelections.filter(found => utubSelections[found].checked)
+
+        if (!jQuery.isEmptyObject(selected)) {
+            let utubId = selected[0].id.replace('utub', '')
+            removeMemberFromUtub(userToRemove, utubId);
+        }
+    })
 
     var csrftoken = $('meta[name=csrf-token]').attr('content')
     $.ajaxSetup({
@@ -49,6 +74,11 @@ $(document).ready(function() {
     });
 });
 
+/**
+ * @function loadUtubData
+ * Loads the UTub names and IDs for the currently logged in user, occurs on first log in
+ * @param {Object} userUtubs - JSON Object containing all user's utub's and their IDs
+ */
 function loadUtubData(userUtubs) {
     let utubNames = [];
     for (let utub of userUtubs) {
@@ -198,21 +228,167 @@ function displayUtubData(utubData) {
     };
 
     displayTags(tags);
-    displayMembers(members, utubData.created_by);
+    displayMembers(members, currentUser, utubData.created_by);
 };
 
+/**
+ * @function displayMembers
+ * Displays the current UTub's members. Gives functionality to leave the UTub.
+ * If creator of the UTub, allows them to add or remove members.
+ * Indicates who the creator was.
+ * @param {Object} utubMembers - JSON object containing all members of this UTub  
+ * @param {string} currentUser - The current user's ID
+ * @param {number} creator - The creator's ID
+ */
 function displayMembers(utubMembers, currentUser, creator) {
     const memberDeck = $('.members-holder');
     for (let member of utubMembers) {
+
+        // Only display members if they aren't already being displayed
+        if ($('#user' + member.id).length > 0) {
+            continue
+        };
+
         let memberCard = $('<div></div>').addClass('card');
         let memberCardBody = $('<div></div>').addClass('card-body');
-        memberCardBody.text(member.username);
+        let memberCardBodyRow = $('<div></div>').addClass('row justify-content-center');
+
+        let cardText = member.username
+
+        if (creator === member.id) {
+            cardText = cardText + " (Creator)";
+        };
+        // memberCardBody.text(cardText);
+        let memberUsername = $('<div></div>').addClass('col-12')
+        memberUsername.text(cardText)
+        memberCardBodyRow.append(memberUsername)
+
+        if (currentUser == creator && creator !== member.id) {
+            memberUsername.removeClass('col-12').addClass('col-8')
+            let removeDiv = $('<div></div>').addClass('col-4')
+            let removeUserButton = $('<a></a>').attr({
+                'class': 'btn btn-warning btn-sm py-0 remove-user',
+                'href': '#',
+                'id': 'user' + member.id
+            })
+            removeUserButton.html("Remove")
+            removeDiv.append(removeUserButton)
+            memberCardBodyRow.append(removeDiv)
+        }
+
+        
         memberCard.append(memberCardBody);
+        memberCardBody.append(memberCardBodyRow)
+
+        memberCard.attr({
+            'id': 'user' + member.id
+        });
         
         memberDeck.append(memberCard);
         memberCard.css("height", "4rem");
     };
+
+    if (currentUser == creator) {
+        $('.add-user').remove()
+        let addUserButton = $('<a></a>').attr({
+            'class': 'btn btn-primary btn-sm py-0 px-5 add-user',
+            'href': '#'
+        });
+        addUserButton.html("Add a User!")
+        memberDeck.append(addUserButton)
+    } else {
+        $('.remove-self').remove()
+        let removeSelfButton = $('<a></a>').attr({
+            'class': 'btn btn-warning btn-sm py-0 px-5 remove-user remove-self',
+            'href': '#',
+            'id': 'user' + currentUser
+        });
+        removeSelfButton.html("Leave this UTub")
+        memberDeck.append(removeSelfButton)
+    }
 };
+
+function removeMemberFromUtub(userID, utubId) {
+    let removeData = {
+        "UTubID": utubId,
+        "UserID": userID
+    }
+
+    let request = $.ajax({
+        url: "/delete_user",
+        contentType: "application/json",
+        type: 'POST',
+        dataType: 'json',
+        data: JSON.stringify(removeData),
+    })
+
+    request.done(function(xml, textStatus, xhr) {
+        if (xhr.status == 200) {
+            let cardToDel = '#user' + userID;
+            $(cardToDel).remove();
+        };
+    });
+
+    request.fail(function(xhr, textStatus, error) {
+        console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+        console.log("Error: " + error);
+    });
+}
+
+/**
+ * @function addMemberToUtub
+ * AJAX call for the creator to add a user to their UTub. Pulls up a form that requires
+ * creator to input the username of the user they want to add. Username add is case-sensitive.
+ * @param {string} utub_id - The ID of this UTub
+ */
+function addMemberToUtub(utub_id) {
+    $.get("/add_user/" + utub_id, function (formHtml) {
+        $('#Modal .modal-content').html(formHtml);
+        $('#Modal').modal();
+        $('#submit').click(function (event) {
+            event.preventDefault();
+            $('.modal-flasher').prop({'hidden': true});
+            $('.invalid-feedback').remove();
+            $('.alert').remove();
+            $('.form-control').removeClass('is-invalid');
+            let request = $.ajax({
+                url: "/add_user/" + utub_id,
+                type: "POST",
+                data: $('#ModalForm').serialize(),
+            });
+
+            request.done(function(add_url_success, textStatus, xhr) {
+                if (xhr.status == 200) {
+                    $('#Modal').modal('hide');
+                    getUtubInfo(add_url_success.utubID)
+                }; 
+            });
+        
+            request.fail(function(xhr, textStatus, error) {
+                if (xhr.status == 409 || xhr.status == 400) {
+                    const flashMessage = xhr.responseJSON.Error;
+                    const flashCategory = xhr.responseJSON.Category;
+
+                    let flashElem = flashMessageBanner(flashMessage, flashCategory)
+                    flashElem.insertBefore('#modal-body').show();
+                } else if (xhr.status == 404) {
+                    $('.invalid-feedback').remove();
+                    $('.alert').remove();
+                    $('.form-control').removeClass('is-invalid');
+                    const error = JSON.parse(xhr.responseJSON);
+                    for (var key in error) {
+                        $('<div class="invalid-feedback"><span>' + error[key] + '</span></div>' )
+                        .insertAfter('#' + key).show();
+                        $('#' + key).addClass('is-invalid');
+                    };
+                }; 
+                console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+                console.log("Error: " + error);
+            })
+        });
+    });
+};
+
 
 /**
  * @function displayTags
@@ -358,6 +534,9 @@ function addUrlToUtub(utub_id) {
         $('#submit').click(function (event) {
             event.preventDefault();
             $('.modal-flasher').prop({'hidden': true});
+            $('.invalid-feedback').remove();
+            $('.alert').remove();
+            $('.form-control').removeClass('is-invalid');
             let request = $.ajax({
                 url: "/add_url/" + utub_id,
                 type: "POST",

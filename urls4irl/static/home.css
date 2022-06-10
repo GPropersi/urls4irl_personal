@@ -44,7 +44,7 @@ span.tag {
     margin-top: 5px;
 }
 
-.del-link {
+.del-link, .remove-user {
     margin-inline-start: 5px;
 }
 

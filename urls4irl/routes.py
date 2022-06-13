@@ -1,3 +1,4 @@
+from sqlalchemy import true
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask import render_template, url_for, redirect, flash, request, jsonify, abort
 from urls4irl import app, db
@@ -39,27 +40,26 @@ def home():
         utub_details = current_user.serialized_on_initial_load
         return render_template('home.html', utubs_for_this_user=utub_details)
 
-    elif len(request.args) > 1:
-        # Too many args in URL
+    elif len(request.args) > 1 or 'UTubID' not in request.args:
+        # Too many args in URL, or wrong argument
         return abort(404)
 
-    else:
-        if 'UTubID' not in request.args:
-            # Wrong argument
-            return abort(404)
-            
+    else:   
         requested_id = request.args.get('UTubID')
 
         utub = Utub.query.get_or_404(requested_id)
         
         if int(current_user.get_id()) not in [int(member.user_id) for member in utub.members]:
             # User is not member of the UTub they are requesting
-            return abort(403)
+            access_denied = {
+                'error': 'You do not have permission to access this UTub.',
+                'category': 'danger'
+            }
+            return jsonify(access_denied), 403
 
         utub_data_serialized = utub.serialized
 
         return jsonify(utub_data_serialized)
-
 
 """#####################        END MAIN ROUTES        ###################"""
 
@@ -166,7 +166,6 @@ def create_utub():
                     'error': 'You are already a part of a UTub with that name.',
                     'category': 'danger'
                 }
-
                 return jsonify(error), 409
         
         new_utub = Utub(name=name, utub_creator=current_user.get_id(), utub_description=description)
@@ -207,7 +206,7 @@ def delete_utub():
 
     if not delete_utub_json or 'UTubID' not in delete_utub_json:
         delete_failure = {
-            'message': 'You do not have permission to delete this UTub.',
+            'error': 'You do not have permission to delete this UTub.',
             'category': 'danger'
         }
         return jsonify(delete_failure), 403
@@ -216,9 +215,9 @@ def delete_utub():
 
     utub = Utub.query.get(int(utub_id))
 
-    if int(current_user.get_id()) != int(utub.created_by.id):
+    if not utub or int(current_user.get_id()) != int(utub.created_by.id):
         delete_failure = {
-            'message': 'You do not have permission to delete this UTub.',
+            'error': 'You do not have permission to delete this UTub.',
             'category': 'danger'
         }
         return jsonify(delete_failure), 403
@@ -314,39 +313,68 @@ def delete_user():
 
     current_utub = Utub.query.get(int(utub_id))
 
+    if not current_utub:
+        # UTub must exist
+        user_delete_failure = {
+            'error': 'Cannot remove user from this UTub.',
+            'category': 'danger'
+        }
+        return jsonify(user_delete_failure), 403
+
     if int(user_id) == int(current_utub.created_by.id):
         # Creator tried to delete themselves
-        flash("Creator of a UTub cannot be removed.", category="danger")
-        return home(), 400
+        user_delete_failure = {
+            'error': 'Creator cannot be removed.',
+            'category': 'danger'
+        }
+        return jsonify(user_delete_failure), 400
 
     current_user_ids_in_utub = [int(member.user_id) for member in current_utub.members]
 
     if int(user_id) not in current_user_ids_in_utub:
         # User not in this Utub
         flash("Can't remove a user that isn't in this UTub.", category="danger")
-        return home(), 400
+        user_delete_failure = {
+            'error': 'Cannot remove user from this UTub.',
+            'category': 'danger'
+        }
+        return jsonify(user_delete_failure), 400
 
     if int(current_user.get_id()) == int(current_utub.created_by.id):
         # Creator of utub wants to delete someone
+        creator = True
         user_to_delete_in_utub = [member_to_delete for member_to_delete in current_utub.members if int(user_id) == (member_to_delete.user_id)][0]
 
     elif int(current_user.get_id()) in current_user_ids_in_utub and int(user_id) == int(current_user.get_id()):
         # User in this UTub and user wants to remove themself
+        creator = False
         user_to_delete_in_utub = [member_to_delete for member_to_delete in current_utub.members if int(user_id) == (member_to_delete.user_id)][0]
 
     else:
+        user_delete_failure = {
+            'error': 'You do not have permission to remove this user.',
+            'category': 'danger'
+        }
         flash("Error: Only the creator of a UTub can delete other users. Only you can remove yourself.", category="danger")
-        return home, 403
+        return jsonify(user_delete_failure), 403
     
     current_utub.members.remove(user_to_delete_in_utub)
     db.session.commit()
-    flash("Removed user", category="danger")
 
-    return jsonify({
+    user_delete_success = {
         'Result': 'Success',
         'UTub': utub_id,
         'User_Removed': user_id
-    }), 200
+    }
+
+    if creator:
+        user_delete_success['message'] = 'Successfully removed user.'
+        user_delete_success['category'] = 'success'
+    else:
+        user_delete_success['message'] = 'Left the UTub.'
+        user_delete_success['category'] = 'success'
+
+    return jsonify(user_delete_success), 200
 
 @app.route('/add_user/<int:utub_id>', methods=["GET", "POST"])
 @login_required
@@ -360,8 +388,11 @@ def add_user(utub_id: int):
     utub = Utub.query.get(utub_id)
 
     if int(utub.created_by.id) != int(current_user.get_id()):
-        flash("Not authorized to add a user to this UTub", category="danger")
-        return abort(403)
+        add_user_error = {
+            'error': 'Not authorized to add a user to this UTub',
+            'category': 'danger'
+        }
+        return jsonify(add_user_error), 403
 
     utub_new_user_form = UTubNewUserForm()
 
@@ -432,22 +463,12 @@ def delete_url():
     # Search through all urls in the UTub for the one that matches the prescribed URL ID and get the user who added it - should be only one
     url_added_by = [url_in_utub.user_that_added_url.id for url_in_utub in utub.utub_urls if int(url_in_utub.url_id) == int(url_id)]
 
-    if len(url_added_by) != 1 or not url_added_by:
-        # No user added this URL, or multiple users did...
-        flash("Something went wrong", category="danger")
-        return abort(404)
-
     # Otherwise, only one user should've added this url - retrieve them
     url_added_by = url_added_by[0]
 
     if int(current_user.get_id()) == owner_id or int(current_user.get_id()) == url_added_by:
         # User is creator of this UTub, or added the URL
         utub_url_user_row = Utub_Urls.query.filter_by(utub_id=utub_id, url_id=url_id).all()
-
-        if len(utub_url_user_row) > 1:
-            # How did this happen? URLs are unique to each UTub, so should only return one
-            flash("Error: Something went wrong", category="danger")
-            return abort(404)
 
         db.session.delete(utub_url_user_row[0])
         db.session.commit()
@@ -460,8 +481,11 @@ def delete_url():
         return jsonify(delete_success), 200
 
     else:
-        flash("Can only delete URLs you added, or if you are the creator of this UTub.", category="danger")
-        return home(), 403
+        delete_url_error = {
+            'error': 'You do not have permission to remove this URL.',
+            'category': 'danger'
+        }
+        return jsonify(delete_url_error), 403
 
 @app.route('/add_url/<int:utub_id>', methods=["GET", "POST"])
 @login_required
@@ -475,9 +499,11 @@ def add_url(utub_id: int):
     utub = Utub.query.get(int(utub_id))
 
     if int(current_user.get_id()) not in [int(member.user_id) for member in utub.members]:
-        flash("Not authorized to add a URL to this UTub", category="danger")
-
-        return home(), 403
+        add_url_error = {
+            'error': 'You do not have permission to add a URL to this UTub.',
+            'category': 'danger'
+        }
+        return jsonify(add_url_error), 403
 
     utub_new_url_form = UTubNewURLForm()
 
@@ -491,9 +517,11 @@ def add_url(utub_id: int):
             validated_url = check_request_head(url_string)
         
         except InvalidURLError:
-            return jsonify({
-                'Error': 'Invalid URL.',
-                'Category': 'danger'}), 400
+            add_url_error = {
+                'error': 'Invalid URL.',
+                'category': 'danger'
+            }
+            return jsonify(add_url_error), 400
 
         else: 
             # Get URL if already created
@@ -508,9 +536,11 @@ def add_url(utub_id: int):
                 #URL already generated, now confirm if within UTUB or not
                 if already_created_url in urls_in_utub:
                     # URL already in UTUB
-                    return jsonify({
-                        'Error': 'URL already in UTub',
-                        'Category': 'danger'}), 409
+                    add_url_error = {
+                        'error': 'URL already in UTub.',
+                        'category': 'danger'
+                    }
+                    return jsonify(add_url_error), 409
 
                 url_utub_user_add = Utub_Urls(utub_id=utub_id, url_id=already_created_url.id, user_id=int(current_user.get_id()))
 
@@ -524,7 +554,7 @@ def add_url(utub_id: int):
             db.session.add(url_utub_user_add)
             db.session.commit()
 
-            return jsonify({'url': url_for('home'), 'utubID': utub_id}), 200
+            return jsonify({'url_added': validated_url, 'utubID': utub_id}), 200
     else:
         url_errors = json.dumps(utub_new_url_form.errors, ensure_ascii=False)
         return jsonify(url_errors), 404

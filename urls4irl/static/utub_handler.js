@@ -19,7 +19,7 @@ $(document).ready(function() {
     // Delete a URL from a UTub on button click
     $(document).on('click', '.del-link', function() {
         const linkToDelete = $(this).attr('id');
-        deleteUtubLink(linkToDelete);
+        deleteUTubURL(linkToDelete);
     });
 
     // Add a tag to a URL on button click
@@ -124,9 +124,17 @@ function getUtubInfo(utubId) {
         };
     });
 
-    request.fail(function(xhr, textStatus, error) {
-        console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
-        console.log("Error: " + error);
+    request.fail(function(response, textStatus, error) {
+        if (response.status == 403) {
+            const flashMessage = response.responseJSON.error;
+            const flashCategory = response.responseJSON.category;
+
+            const flashElem = flashMessageBanner(flashMessage, flashCategory);
+            flashElem.insertBefore($('.main-content'));
+        } else {
+            console.log("Failure. Status code: " + response.status + ". Status: " + textStatus);
+            console.log("Error: " + error);
+        };
     });
 };
 
@@ -279,7 +287,7 @@ function displayUtubData(utubData) {
  */
 function addDeleteUTubButton() {
     const delUTub = $('<btn></btn>').addClass('delete-utub').html("Delete UTub");
-    delUTub.addClass('btn').addClass('btn-primary').addClass('btn-block').css("margin-top", "10px");
+    delUTub.addClass('btn').addClass('btn-warning').addClass('btn-block').css("margin-top", "10px");
     $("#UTubDeck").append(delUTub);
 }
 
@@ -389,11 +397,19 @@ function removeMemberFromUtub(userID, utubId) {
         };
     });
 
-    request.fail(function(xhr, textStatus, error) {
-        console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
-        console.log("Error: " + error);
+    request.fail(function(response, textStatus, error) {
+        if (response.status != 404) {
+            const flashMessage = response.responseJSON.error;
+            const flashCategory = response.responseJSON.category;
+
+            const flashElem = flashMessageBanner(flashMessage, flashCategory);
+            flashElem.insertBefore($('.main-content'));
+        } else {
+            console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+            console.log("Error: " + error);
+        };
     });
-}
+};
 
 /**
  * @function addMemberToUtub
@@ -402,7 +418,7 @@ function removeMemberFromUtub(userID, utubId) {
  * @param {string} utub_id - The ID of this UTub
  */
 function addMemberToUtub(utub_id) {
-    $.get("/add_user/" + utub_id, function (formHtml) {
+    let addUser_Request = $.get("/add_user/" + utub_id, function (formHtml) {
         $('#Modal .modal-content').html(formHtml);
         $('#Modal').modal();
         $('#submit').click(function (event) {
@@ -423,29 +439,40 @@ function addMemberToUtub(utub_id) {
                 }; 
             });
         
-            request.fail(function(xhr, textStatus, error) {
-                if (xhr.status == 409 || xhr.status == 400) {
-                    const flashMessage = xhr.responseJSON.Error;
-                    const flashCategory = xhr.responseJSON.Category;
+            request.fail(function(response, textStatus, error) {
+                if (response.status == 409 || response.status == 400 || response.status == 403) {
+                    const flashMessage = response.responseJSON.Error;
+                    const flashCategory = response.responseJSON.Category;
 
                     let flashElem = flashMessageBanner(flashMessage, flashCategory)
                     flashElem.insertBefore('#modal-body').show();
-                } else if (xhr.status == 404) {
+                } else if (response.status == 404) {
                     $('.invalid-feedback').remove();
                     $('.alert').remove();
                     $('.form-control').removeClass('is-invalid');
-                    const error = JSON.parse(xhr.responseJSON);
+                    const error = JSON.parse(response.responseJSON);
                     for (var key in error) {
                         $('<div class="invalid-feedback"><span>' + error[key] + '</span></div>' )
                         .insertAfter('#' + key).show();
                         $('#' + key).addClass('is-invalid');
                     };
                 }; 
-                console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+                console.log("Failure. Status code: " + response.status + ". Status: " + textStatus);
                 console.log("Error: " + error);
             })
         });
     });
+
+    // Error if not authorized to add user to this utub
+    addUser_Request.fail(function(response, textStatus, error){
+        if (response.status == 403) {
+            const flashMessage = response.responseJSON.error;
+            const flashCategory = response.responseJSON.category;
+
+            const flashElem = flashMessageBanner(flashMessage, flashCategory);
+            flashElem.insertBefore($('.main-content'));
+        }
+    })
 };
 
 /**
@@ -621,7 +648,7 @@ function deleteUtub(utub_id) {
 
     request.done(function(response, textStatus, xhr) {
         if (xhr.status == 200) {
-            // Flash success on delete of URL
+            // Flash success on delete of UTub
             const flashElem = flashMessageBanner(response.message, response.category)
             flashElem.insertBefore($('.main-content'))
             let utubSelections = $('.utub-names-radios :radio');
@@ -630,31 +657,38 @@ function deleteUtub(utub_id) {
             if (utubSelections.length == 1) {
                 selected.parent().remove();
                 userHasUtubs(false);
-                return
-            }
+                return;
+            };
 
             const firstUtub = utubSelections[0].id.replace('utub', '');
 
             if (utub_id == firstUtub) {
-                utubSelections[1].checked = true
+                utubSelections[1].checked = true;
                 const secondUtub = utubSelections[1].id.replace('utub', '');
+                selected.parent().remove()
                 getUtubInfo(secondUtub);
-                utubSelections[0].remove();
-
             } else {
                 const selectedID = selected[0].id;
                 const toRemove = $('#' + selectedID);
                 toRemove.parent().remove()
                 getUtubInfo(firstUtub);
-                utubSelections[0].checked = true
-            }
+                utubSelections[0].checked = true;
+            };
     
         };
     });
 
-    request.fail(function(xhr, textStatus, error) {
-        console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
-        console.log("Error: " + error);
+    request.fail(function(response, textStatus, error) {
+        if (response.status === 403) {
+            const flashMessage = response.responseJSON.error;
+            const flashCategory = response.responseJSON.category;
+    
+            const flashElem = flashMessageBanner(flashMessage, flashCategory);
+            flashElem.insertBefore($('.main-content'));
+        } else {
+            console.log("Failure. Status code: " + response.status + ". Status: " + textStatus);
+            console.log("Error: " + error);
+        };
     });
 }
 
@@ -664,7 +698,7 @@ function deleteUtub(utub_id) {
  * @param {string} utub_id - The ID for the UTub to generate a URL for
  */
 function addUrlToUtub(utub_id) {
-    $.get("/add_url/" + utub_id, function (formHtml) {
+    let addUrl = $.get("/add_url/" + utub_id, function (formHtml) {
         $('#Modal .modal-content').html(formHtml);
         $('#Modal').modal();
         $('#submit').click(function (event) {
@@ -679,44 +713,54 @@ function addUrlToUtub(utub_id) {
                 data: $('#ModalForm').serialize(),
             });
 
-            request.done(function(add_url_success, textStatus, xhr) {
-                if (xhr.status == 200) {
+            request.done(function(add_url_success, textStatus, response) {
+                if (response.status == 200) {
                     $('#Modal').modal('hide');
                     getUtubInfo(add_url_success.utubID)
                 }; 
             });
         
-            request.fail(function(xhr, textStatus, error) {
-                if (xhr.status == 409 || xhr.status == 400) {
-                    const flashMessage = xhr.responseJSON.Error;
-                    const flashCategory = xhr.responseJSON.Category;
+            request.fail(function(response, textStatus, error) {
+                if (response.status == 409 || response.status == 400) {
+                    const flashMessage = response.responseJSON.error;
+                    const flashCategory = response.responseJSON.category;
 
                     let flashElem = flashMessageBanner(flashMessage, flashCategory)
                     flashElem.insertBefore('#modal-body').show();
-                } else if (xhr.status == 404) {
+                } else if (response.status == 404) {
                     $('.invalid-feedback').remove();
                     $('.alert').remove();
                     $('.form-control').removeClass('is-invalid');
-                    const error = JSON.parse(xhr.responseJSON);
+                    const error = JSON.parse(response.responseJSON);
                     for (var key in error) {
                         $('<div class="invalid-feedback"><span>' + error[key] + '</span></div>' )
                         .insertAfter('#' + key).show();
                         $('#' + key).addClass('is-invalid');
                     };
                 }; 
-                console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+                console.log("Failure. Status code: " + response.status + ". Status: " + textStatus);
                 console.log("Error: " + error);
             })
         });
     });
+
+    addUrl.fail(function(response, textStatus, error) {
+        if (response.status == 403) {
+            const flashMessage = response.responseJSON.error;
+            const flashCategory = response.responseJSON.category;
+
+            const flashElem = flashMessageBanner(flashMessage, flashCategory);
+            flashElem.insertBefore($('.main-content'));
+        };
+    });
 };
 
 /**
- * @function deleteUtubLink
+ * @function deleteUTubURL
  * Sends a JSON as a POST request to delete the signified URL from the given UTub
  * @param {string} urlToDel - A string containing the UTub ID and URL ID, split by '-'
  */
-function deleteUtubLink(urlToDel) {
+function deleteUTubURL(urlToDel) {
     const utubAndUrl = urlToDel.split('-');
     const utub = utubAndUrl[0];
     const url = utubAndUrl[1];
@@ -751,9 +795,17 @@ function deleteUtubLink(urlToDel) {
         };
     });
 
-    request.fail(function(xhr, textStatus, error) {
-        console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
-        console.log("Error: " + error);
+    request.fail(function(response, textStatus, error) {
+        if (response.status == 403) {
+            const flashMessage = response.responseJSON.error;
+            const flashCategory = response.responseJSON.category;
+
+            const flashElem = flashMessageBanner(flashMessage, flashCategory);
+            flashElem.insertBefore($('.main-content'));
+        } else {
+            console.log("Failure. Status code: " + response.status + ". Status: " + textStatus);
+            console.log("Error: " + error);
+        };
     });
 };
 

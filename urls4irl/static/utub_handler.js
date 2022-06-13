@@ -31,24 +31,23 @@ $(document).ready(function() {
     // Add a URL on button click
     $('.add-url').click(function() {
         let utubSelections = $('.utub-names-radios :radio');
-        let selected = utubSelections.filter(found => utubSelections[found].checked)
+        let selected = utubSelections.filter(found => utubSelections[found].checked);
 
         if (!jQuery.isEmptyObject(selected)) {
-            let utubId = selected[0].id.replace('utub', '')
-            addUrlToUtub(utubId)
-        }
+            let utubId = selected[0].id.replace('utub', '');
+            addUrlToUtub(utubId);
+        };
     });
 
     // Add a member on button click
     $(document).on('click', '.add-user', function() {
         let utubSelections = $('.utub-names-radios :radio');
-        let selected = utubSelections.filter(found => utubSelections[found].checked)
+        let selected = utubSelections.filter(found => utubSelections[found].checked);
 
-        console.log('selected add user')
         if (!jQuery.isEmptyObject(selected)) {
-            let utubId = selected[0].id.replace('utub', '')
-            addMemberToUtub(utubId, selected)
-        }
+            let utubId = selected[0].id.replace('utub', '');
+            addMemberToUtub(utubId, selected);
+        };
     });
 
     // Remove member on button click
@@ -56,13 +55,24 @@ $(document).ready(function() {
         let userToRemove = $(this).attr('id').replace('user', '');
 
         let utubSelections = $('.utub-names-radios :radio');
-        let selected = utubSelections.filter(found => utubSelections[found].checked)
+        let selected = utubSelections.filter(found => utubSelections[found].checked);
 
         if (!jQuery.isEmptyObject(selected)) {
             let utubId = selected[0].id.replace('utub', '')
             removeMemberFromUtub(userToRemove, utubId);
+        };
+    });
+
+    // Remove UTub on click
+    $(document).on('click', '.delete-utub', function () {
+        let utubSelections = $('.utub-names-radios :radio');
+        let selected = utubSelections.filter(found => utubSelections[found].checked);
+
+        if (!jQuery.isEmptyObject(selected)) {
+            let utubId = selected[0].id.replace('utub', '');
+            deleteUtub(utubId);
         }
-    })
+    });
 
     var csrftoken = $('meta[name=csrf-token]').attr('content')
     $.ajaxSetup({
@@ -80,17 +90,19 @@ $(document).ready(function() {
  * @param {Object} userUtubs - JSON Object containing all user's utub's and their IDs
  */
 function loadUtubData(userUtubs) {
+    if (userUtubs.length === 0) {
+        userHasUtubs(false);
+        return
+    }
+
     let utubNames = [];
     for (let utub of userUtubs) {
         utubNames.push([utub.id, utub.name]);
     };
 
     const firstUtubId = putUtubNames(utubNames);
-    if (firstUtubId == null) {
-        console.log("User has no UTubs");
-    } else {
-        getUtubInfo(firstUtubId, userUtubs);
-    };
+    getUtubInfo(firstUtubId, userUtubs);
+
 };
 
 /**
@@ -107,6 +119,7 @@ function getUtubInfo(utubId) {
 
     request.done(function(utubData, textStatus, xhr) {
         if (xhr.status == 200) {
+            userHasUtubs(true);
             displayUtubData(utubData);
         };
     });
@@ -116,6 +129,26 @@ function getUtubInfo(utubId) {
         console.log("Error: " + error);
     });
 };
+
+/**
+ * @function userHasUtubs
+ * Hides key features if the user does not have any UTubs.
+ * Otherwise, shows the key features
+ * @param {boolean} hasUTubs - Whether or not this user has utubs
+ */
+function userHasUtubs(hasUTubs){
+    $('.add-url').prop({'hidden': !hasUTubs})
+    if (hasUTubs) {
+        $('.no-utubs').remove();
+    } else {
+        const noUtubLabel = $('<h4></h4>').addClass('no-utubs');
+        noUtubLabel.text('No UTubs found.');
+        noUtubLabel.insertBefore($('.create-utub'));
+        $('.utub-title').text('No UTubs found.')
+        $('.members-holder').empty();
+        $('.tags-for-utub').empty();
+    }
+}
 
 /**
  * @function displayUtubData
@@ -129,6 +162,7 @@ function displayUtubData(utubData) {
     let tags = utubData.tags;
     let members = utubData.members;
     let currentUser = $('.c-user').attr('id');
+    $('.no-urls').remove();
     $('.utub-description').remove();
     $('.url-card').remove();
 
@@ -171,7 +205,7 @@ function displayUtubData(utubData) {
 
             let urlLink = $('<a></a>').attr({
                 'class': 'card-title',
-                'href': '"' + urlName + '"',
+                'href': urlName,
             });
             urlLink.html(urlName);
 
@@ -230,9 +264,24 @@ function displayUtubData(utubData) {
         utubHolder.append(noURLs);
     };
 
+    $('.delete-utub').remove();
+    if (currentUser == utubData.created_by) {
+        addDeleteUTubButton();
+    };
+
     displayTags(tags);
     displayMembers(members, currentUser, utubData.created_by);
 };
+
+/**
+ * @function addDeleteUTubButton
+ * Gives the creator of this UTub the option to delete this UTub if they choose to
+ */
+function addDeleteUTubButton() {
+    const delUTub = $('<btn></btn>').addClass('delete-utub').html("Delete UTub");
+    delUTub.addClass('btn').addClass('btn-primary').addClass('btn-block').css("margin-top", "10px");
+    $("#UTubDeck").append(delUTub);
+}
 
 /**
  * @function displayMembers
@@ -245,6 +294,7 @@ function displayUtubData(utubData) {
  */
 function displayMembers(utubMembers, currentUser, creator) {
     const memberDeck = $('.members-holder');
+    memberDeck.empty();
     for (let member of utubMembers) {
 
         // Only display members if they aren't already being displayed
@@ -302,7 +352,7 @@ function displayMembers(utubMembers, currentUser, creator) {
     } else {
         $('.remove-self').remove()
         let removeSelfButton = $('<a></a>').attr({
-            'class': 'btn btn-warning btn-sm py-0 px-5 remove-user remove-self',
+            'class': 'btn btn-warning btn-sm py-0 remove-user remove-self',
             'href': '#',
             'id': 'user' + currentUser
         });
@@ -311,6 +361,13 @@ function displayMembers(utubMembers, currentUser, creator) {
     }
 };
 
+/**
+ * @function removeMemberFromUtub
+ * Gives the creator the ability to remove a user from a UTub. The creator cannot remove themselves.
+ * Allows a non-creator to remove themselves from the UTub
+ * @param {string} userID - The user ID to remove from this UTub
+ * @param {string} utubId - The UTubID to remove this user from
+ */
 function removeMemberFromUtub(userID, utubId) {
     let removeData = {
         "UTubID": utubId,
@@ -350,7 +407,6 @@ function addMemberToUtub(utub_id) {
         $('#Modal').modal();
         $('#submit').click(function (event) {
             event.preventDefault();
-            // $('.modal-flasher').prop({'hidden': true});
             $('.invalid-feedback').remove();
             $('.alert').remove();
             $('.form-control').removeClass('is-invalid');
@@ -360,10 +416,10 @@ function addMemberToUtub(utub_id) {
                 data: $('#ModalForm').serialize(),
             });
 
-            request.done(function(add_url_success, textStatus, xhr) {
+            request.done(function(add_user_success, textStatus, xhr) {
                 if (xhr.status == 200) {
                     $('#Modal').modal('hide');
-                    getUtubInfo(add_url_success.utubID)
+                    getUtubInfo(add_user_success.utubID)
                 }; 
             });
         
@@ -391,7 +447,6 @@ function addMemberToUtub(utub_id) {
         });
     });
 };
-
 
 /**
  * @function displayTags
@@ -549,6 +604,61 @@ function createUtub() {
 };
 
 /**
+ * @function deleteUtub
+ * @param {string} utub_id - The ID of the UTub to delete
+ */
+function deleteUtub(utub_id) {
+    let utubToDelete = new Object();
+    utubToDelete.UTubID = utub_id;
+
+    let request = $.ajax({
+        url: '/delete_utub',
+        contentType: "application/json",
+        type: 'POST',
+        dataType: 'json',
+        data: JSON.stringify(utubToDelete),
+    });
+
+    request.done(function(response, textStatus, xhr) {
+        if (xhr.status == 200) {
+            // Flash success on delete of URL
+            const flashElem = flashMessageBanner(response.message, response.category)
+            flashElem.insertBefore($('.main-content'))
+            let utubSelections = $('.utub-names-radios :radio');
+            let selected = utubSelections.filter(found => utubSelections[found].checked);
+
+            if (utubSelections.length == 1) {
+                selected.parent().remove();
+                userHasUtubs(false);
+                return
+            }
+
+            const firstUtub = utubSelections[0].id.replace('utub', '');
+
+            if (utub_id == firstUtub) {
+                utubSelections[1].checked = true
+                const secondUtub = utubSelections[1].id.replace('utub', '');
+                getUtubInfo(secondUtub);
+                utubSelections[0].remove();
+
+            } else {
+                const selectedID = selected[0].id;
+                const toRemove = $('#' + selectedID);
+                toRemove.parent().remove()
+                getUtubInfo(firstUtub);
+                utubSelections[0].checked = true
+            }
+    
+        };
+    });
+
+    request.fail(function(xhr, textStatus, error) {
+        console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+        console.log("Error: " + error);
+    });
+}
+
+/**
  * @function addUrlToUtub
  * Adds a URL to a UTub via AJAX request
  * @param {string} utub_id - The ID for the UTub to generate a URL for
@@ -606,11 +716,11 @@ function addUrlToUtub(utub_id) {
  * Sends a JSON as a POST request to delete the signified URL from the given UTub
  * @param {string} urlToDel - A string containing the UTub ID and URL ID, split by '-'
  */
- function deleteUtubLink(urlToDel) {
+function deleteUtubLink(urlToDel) {
     const utubAndUrl = urlToDel.split('-');
     const utub = utubAndUrl[0];
     const url = utubAndUrl[1];
-    var urlToDelete = new Object();
+    let urlToDelete = new Object();
     urlToDelete.UTubID = utub;
     urlToDelete.url_ID = url;
     

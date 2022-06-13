@@ -188,31 +188,53 @@ def create_utub():
         creation_utub_errors = json.dumps(utub_form.errors, ensure_ascii=False)
         return jsonify(creation_utub_errors), 404
 
-@app.route('/delete_utub/<int:utub_id>', methods=["POST"])
+@app.route('/delete_utub', methods=["POST"])
 @login_required
-def delete_utub(utub_id: int):
+def delete_utub():
     """
     Creator wants to delete their UTub. It deletes all associations between this UTub and its contained
     URLS and users.
 
     https://docs.sqlalchemy.org/en/13/orm/cascades.html#delete
 
-    Args:
-        utub_id (int): The ID of the UTub to be deleted
+    On POST, receives a JSON containing the UTubID to delete:
+        UTubID (int): The ID of the UTub to be deleted
+
+    Example:
+    {'UTubID': 1}
     """
+    delete_utub_json = dict(request.get_json())
+
+    if not delete_utub_json or 'UTubID' not in delete_utub_json:
+        delete_failure = {
+            'message': 'You do not have permission to delete this UTub.',
+            'category': 'danger'
+        }
+        return jsonify(delete_failure), 403
+
+    utub_id = delete_utub_json['UTubID']
+
     utub = Utub.query.get(int(utub_id))
 
     if int(current_user.get_id()) != int(utub.created_by.id):
-        flash("You do not have permission to delete this UTub.", category="danger")
-        return home(), 403
+        delete_failure = {
+            'message': 'You do not have permission to delete this UTub.',
+            'category': 'danger'
+        }
+        return jsonify(delete_failure), 403
     
     else:
         utub = Utub.query.get(int(utub_id))
         db.session.delete(utub)
         db.session.commit()
-        flash("You successfully deleted this UTub.", category="danger")
+        delete_success = {
+            'message': 'You successfully deleted this UTub',
+            'category': 'success',
+            'UTubID': utub_id,
+            'url': url_for('home')
+        }
 
-        return redirect(url_for('home'))
+        return jsonify(delete_success)
 
 @app.route('/update_utub_desc/<int:utub_id>', methods=["GET", "POST"])
 @login_required

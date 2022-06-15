@@ -24,7 +24,7 @@ form {
     font-size: large;
 }
 
-span.tag {
+/* span.tag {
     background: white;
     margin-left: 1px;
     margin-right: 1px;
@@ -33,7 +33,7 @@ span.tag {
     padding-top: 1px;
     padding-bottom: 1px;
     border-radius: 16px;
-}
+} */
 
 .url-card {
     padding: 3px;

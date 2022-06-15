@@ -580,8 +580,11 @@ def add_tag(utub_id: int, url_id: int):
     if not user_in_utub or not utub_url:
         # How did a user not in this utub get access to add a tag to this URL?
         # How did a user try to add a tag to a URL not contained within the UTub?
-        flash("Error has occurred", category="danger")
-        return home(), 404
+        add_tag_error = {
+            'error': 'Not able to process this tag request.',
+            'category': 'danger'
+        }
+        return jsonify(add_tag_error), 403
        
     url_tag_form = UTubNewUrlTagForm()
 
@@ -594,8 +597,11 @@ def add_tag(utub_id: int, url_id: int):
 
         if len(tags_already_on_this_url) > 4:
                 # Cannot have more than 5 tags on a URL
-                flash("You cannot add more tags to this URL.", category="danger")
-                return home(), 400
+                add_tag_error = {
+                    'error': 'You cannot add more tags to this URL.',
+                    'category': 'danger'
+                }
+                return jsonify(add_tag_error), 400
 
         # If not a tag already, create it
         tag_already_created = Tags.query.filter_by(tag_string=tag_to_add).first()
@@ -605,8 +611,11 @@ def add_tag(utub_id: int, url_id: int):
             this_tag_is_already_on_this_url = [tags for tags in tags_already_on_this_url if int(tags.tag_id) == int(tag_already_created.id)]
 
             if this_tag_is_already_on_this_url:
-                flash("This tag is already on this URL", category="danger")
-                return render_template('add_tag_to_url.html', url_tag_form=url_tag_form), 400
+                add_tag_error = {
+                    'error': 'This tag is already on this URL.',
+                    'category': 'danger'
+                }
+                return jsonify(add_tag_error), 400
 
             # Associate with the UTub and URL
             utub_url_tag = Url_Tags(utub_id=utub_id, url_id=url_id, tag_id=tag_already_created.id)
@@ -621,11 +630,17 @@ def add_tag(utub_id: int, url_id: int):
         db.session.add(utub_url_tag)
         db.session.commit()
 
-        flash(f"Added {tag_to_add} to {utub_url[0].url_in_utub.url_string}", category="info")
+        add_tag_success = {
+            'message': 'Tag added successfully.',
+            'category': 'info',
+            'tag': tag_to_add,
+            'url': utub_url[0].url_in_utub.url_string,
+            'utubID': utub_id
+        }
 
-        return redirect(url_for('home', UTubID=utub_id))
+        return jsonify(add_tag_success), 200
 
-    return render_template('add_tag_to_url.html', url_tag_form=url_tag_form)
+    return render_template('_add_tag_to_url_form.html', url_tag_form=url_tag_form)
 
 @app.route('/remove_tag/<int:utub_id>/<int:url_id>/<int:tag_id>', methods=["POST"])
 @login_required

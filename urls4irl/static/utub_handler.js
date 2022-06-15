@@ -25,7 +25,10 @@ $(document).ready(function() {
     // Add a tag to a URL on button click
     $(document).on('click', '.add-tag', function() {
         const linkToAddTagTo = $(this).attr('id');
-        console.log(linkToAddTagTo);
+        const utubAndURL = linkToAddTagTo.split('-');
+        const utubID = utubAndURL[0];
+        const urlID = utubAndURL[1];
+        addTag(utubID, urlID);
     });
 
     // Add a URL on button click
@@ -227,17 +230,46 @@ function displayUtubData(utubData) {
             
             // Check if url has tags, and if so, append the elements
             if (urlTags.length !== 0) {
-                innerUrlCard.append($('<span>Tags: </span>').attr({
-                    'class': 'card-text'
-                }));
+                const tagSpan = $('<span>Tags: </span>').addClass('card-text tag-span');
+                innerUrlCard.append(tagSpan);
 
                 for (let urlTagID of urlTags) {
-                    let tagName = tags.find(element => element.id === urlTagID);
-                    let tagToAdd = $('<span></span>').attr({
-                        'class': 'tag'
+                    let tagBadge = $('<span></span>').addClass('badge badge-pill badge-light');
+                    let tagBadgeText = $('<span></span>').text('Hello');
+                    let tagBadgeExit = $('<span></span>');
+                    let tagBadge2 = $('<button></button>').addClass('close').attr({
+                        'data-dismiss': 'alert',
+                        'aria-label': 'Close'
                     });
-                    tagToAdd.html(tagName.tag_string);
-                    innerUrlCard.append(tagToAdd);
+                    tagBadge2.append('<span aria-hidden="false">&times;</span>');
+                    tagBadge.text('Hello')
+                    tagBadgeExit.append(tagBadge2)
+                    // tagBadge.append(tagBadge2);
+                    tagSpan.append(tagBadgeText)
+                    tagSpan.append(tagBadgeExit)
+                    
+                    // let tagBadge = $('<span></span>');
+                    // let tagBadgeInterior = $('<div></div>');
+                    // tagBadge.append(tagBadgeInterior);
+                    // tagBadgeInterior.addClass('row justify-content-center');
+
+                    // let tagName = tags.find(element => element.id === urlTagID);
+                    // let tagToAdd = $('<span></span>').addClass('tag');
+                    // tagToAdd.addClass('badge').addClass('badge-pill').addClass('badge-light');
+                    // tagToAdd.text(tagName.tag_string);
+                    
+
+                    // const closeButton = $('<button></button>').addClass('close').attr({
+                    //     'data-dismiss': 'alert',
+                    //     'aria-label': 'Close'
+                    // });
+                    // closeButton.append('<span aria-hidden="false">&times;</span>');
+                    
+                    // tagToAdd.html($('<span></span>').html(closeButton))
+                    // tagToAdd.text(tagName.tag_string);
+
+                    // tagBadgeInterior.append(tagToAdd)
+                    // innerUrlCard.append(tagBadge);
                 };
                 innerUrlCard.append('<br>');
             };
@@ -481,7 +513,7 @@ function addMemberToUtub(utub_id) {
  * @param {Array} utubTags - The tags for this UTub, stored in a string
  */
 function displayTags(utubTags) {
-    let utubTagsForm = $(".tags-for-utub");
+    let utubTagsForm = $(".tags-for-utub").empty();
     $('.no-tags').remove();
     if (utubTags.length === 0) {
         const noTags = $('<h4></h4>').addClass('no-tags').html('No tags in this UTub. Add some!');
@@ -808,6 +840,69 @@ function deleteUTubURL(urlToDel) {
         };
     });
 };
+
+function addTag(utub_id, url_id){
+    let addTagRequest = $.get("/add_tag/" + utub_id + "/" + url_id, function (formHtml) {
+        $('#Modal .modal-content').html(formHtml);
+        $('#Modal').modal();
+        $('#submit').click(function (event) {
+            event.preventDefault();
+            $('.invalid-feedback').remove();
+            $('.alert').remove();
+            $('.form-control').removeClass('is-invalid');
+            let request = $.ajax({
+                url: "/add_tag/" + utub_id + "/" + url_id,
+                type: "POST",
+                data: $('#ModalForm').serialize(),
+            });
+
+            request.done(function(add_tag_success, textStatus, response) {
+                console.log(add_tag_success)
+                if (response.status == 200) {
+                    $('#Modal').modal('hide');
+                    getUtubInfo(add_tag_success.utubID);
+                    const flashMessage = add_tag_success.message;
+                    const flashCategory = add_tag_success.category;
+
+                    const flashElem = flashMessageBanner(flashMessage, flashCategory);
+                    flashElem.insertBefore($('.main-content'));
+                }; 
+            });
+        
+            request.fail(function(response, textStatus, error) {
+                if (response.status == 403 || response.status == 400) {
+                    const flashMessage = response.responseJSON.error;
+                    const flashCategory = response.responseJSON.category;
+
+                    let flashElem = flashMessageBanner(flashMessage, flashCategory)
+                    flashElem.insertBefore('#modal-body').show();
+                } else if (response.status == 404) {
+                    $('.invalid-feedback').remove();
+                    $('.alert').remove();
+                    $('.form-control').removeClass('is-invalid');
+                    const error = JSON.parse(response.responseJSON);
+                    for (var key in error) {
+                        $('<div class="invalid-feedback"><span>' + error[key] + '</span></div>' )
+                        .insertAfter('#' + key).show();
+                        $('#' + key).addClass('is-invalid');
+                    };
+                }; 
+                console.log("Failure. Status code: " + response.status + ". Status: " + textStatus);
+                console.log("Error: " + error);
+            })
+        });
+    });
+
+    addTagRequest.fail(function(response, textStatus, error) {
+        if (response.status == 403) {
+            const flashMessage = response.responseJSON.error;
+            const flashCategory = response.responseJSON.category;
+
+            const flashElem = flashMessageBanner(flashMessage, flashCategory);
+            flashElem.insertBefore($('.main-content'));
+        };
+    });
+}
 
 /**
  * @function flashMessageBanner

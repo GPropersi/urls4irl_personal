@@ -1,0 +1,36 @@
+<script type="text/javascript">
+    if (document.querySelector('head').childElementCount === 1) {
+        window.location.href = '/home';
+    };
+</script>
+
+<form id="ModalForm" name="stepForm" class="form" method="post" action="" novalidate>
+    <div class="modal-header" >
+        <h4 class="modal-title">Add a tag to this URL!</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div class="modal-body" id="modal-body">        
+        {{ url_tag_form.hidden_tag() }}
+        <fieldset class="form-group">
+            <div class="form-group">
+                {{ url_tag_form.tag_string.label(class="form-control-label")}}
+                {% if url_tag_form.tag_string.errors %}
+                    {{ url_tag_form.tag_string(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in url_tag_form.tag_string.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ url_tag_form.tag_string(class="form-control form-control-lg")}}
+                {% endif %}
+            </div>
+        </fieldset>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        {{ url_tag_form.submit(class="btn btn-success")}}
+    </div>
+</form>

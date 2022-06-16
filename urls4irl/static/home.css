@@ -67,3 +67,30 @@ form {
 #ChatDeck {
     background: green;
 }
+
+.tag-badge {
+    border-radius: 2rem;
+    margin-inline: 2px;
+    padding-inline: 5px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.tag-del {
+    padding: 0rem;
+    vertical-align: unset;
+    padding-left: 5px;
+    display: none;
+}
+
+.tag-badge:hover .tag-del {
+    display: inline-block;
+    line-height: 100%;
+    height: 100%;
+    font-size: 100%;
+}
+
+.tag-del:focus {
+    outline: none;
+    box-shadow: none;
+}

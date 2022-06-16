@@ -31,6 +31,13 @@ $(document).ready(function() {
         addTag(utubID, urlID);
     });
 
+    // Remove a tag on button click
+    $(document).on('click', '.tag-del', function() {
+        const tagToRemove = $(this).parent().parent();
+        const tagData = tagToRemove.attr('id');
+        removeTag(tagToRemove, tagData);
+    })
+
     // Add a URL on button click
     $('.add-url').click(function() {
         let utubSelections = $('.utub-names-radios :radio');
@@ -230,46 +237,21 @@ function displayUtubData(utubData) {
             
             // Check if url has tags, and if so, append the elements
             if (urlTags.length !== 0) {
-                const tagSpan = $('<span>Tags: </span>').addClass('card-text tag-span');
+                const tagSpan = $('<span></span>').addClass('card-text tag-span');
                 innerUrlCard.append(tagSpan);
+                let tagCounter = 0;
 
                 for (let urlTagID of urlTags) {
-                    let tagBadge = $('<span></span>').addClass('badge badge-pill badge-light');
-                    let tagBadgeText = $('<span></span>').text('Hello');
-                    let tagBadgeExit = $('<span></span>');
-                    let tagBadge2 = $('<button></button>').addClass('close').attr({
-                        'data-dismiss': 'alert',
-                        'aria-label': 'Close'
-                    });
-                    tagBadge2.append('<span aria-hidden="false">&times;</span>');
-                    tagBadge.text('Hello')
-                    tagBadgeExit.append(tagBadge2)
-                    // tagBadge.append(tagBadge2);
-                    tagSpan.append(tagBadgeText)
-                    tagSpan.append(tagBadgeExit)
-                    
-                    // let tagBadge = $('<span></span>');
-                    // let tagBadgeInterior = $('<div></div>');
-                    // tagBadge.append(tagBadgeInterior);
-                    // tagBadgeInterior.addClass('row justify-content-center');
+                    const tagToAdd = tags.find(element => element.id === urlTagID);
+                    let tagBadge = tagElemBuilder(tagToAdd);
+                    if (tagCounter === 0) {
+                        tagBadge.css("margin-left", "0px");
+                        tagCounter += 1;
+                    };
 
-                    // let tagName = tags.find(element => element.id === urlTagID);
-                    // let tagToAdd = $('<span></span>').addClass('tag');
-                    // tagToAdd.addClass('badge').addClass('badge-pill').addClass('badge-light');
-                    // tagToAdd.text(tagName.tag_string);
-                    
-
-                    // const closeButton = $('<button></button>').addClass('close').attr({
-                    //     'data-dismiss': 'alert',
-                    //     'aria-label': 'Close'
-                    // });
-                    // closeButton.append('<span aria-hidden="false">&times;</span>');
-                    
-                    // tagToAdd.html($('<span></span>').html(closeButton))
-                    // tagToAdd.text(tagName.tag_string);
-
-                    // tagBadgeInterior.append(tagToAdd)
-                    // innerUrlCard.append(tagBadge);
+                    tagBadge.attr('id', utubData.id + "-" + url.url_id + "-" + urlTagID);
+                    tagBadge.attr('tag', urlTagID);
+                    tagSpan.append(tagBadge);
                 };
                 innerUrlCard.append('<br>');
             };
@@ -523,22 +505,21 @@ function displayTags(utubTags) {
             let tagName = tag.tag_string;
             let tagID = tag.id;
 
-            let tagLabel = $('<label></label>').attr({
+            let tagLabel = $('<label></label>').addClass('form-check-label').attr({
                 'for': tagName,
-                'class': 'form-check-label'
             });
             tagLabel.html(tagName);
 
-            let tagCheckbox = $('<input>').attr({
+            let tagCheckbox = $('<input>').addClass('form-check-input').attr({
                 'type': 'checkbox',
                 'id': tagName,
                 'name': tagName,
                 'value': tagID,
-                'class': 'form-check-input'
             });
 
             let newTag = $('<div></div>');
-            newTag.addClass('form-check');
+            newTag.addClass('form-check').addClass('tag-choice');
+            newTag.attr("tag-choice", tagID);
             newTag.append(tagCheckbox);
             newTag.append(tagLabel);
             utubTagsForm.append(newTag);
@@ -857,7 +838,6 @@ function addTag(utub_id, url_id){
             });
 
             request.done(function(add_tag_success, textStatus, response) {
-                console.log(add_tag_success)
                 if (response.status == 200) {
                     $('#Modal').modal('hide');
                     getUtubInfo(add_tag_success.utubID);
@@ -902,6 +882,82 @@ function addTag(utub_id, url_id){
             flashElem.insertBefore($('.main-content'));
         };
     });
+}
+
+function removeTag(tagElem, tagData) {
+    const rawTagData = tagData.split('-');
+    let tagDataForDelete = new Object;
+    tagDataForDelete.UTubID = rawTagData[0];
+    tagDataForDelete.UrlID = rawTagData[1];
+    tagDataForDelete.TagID = rawTagData[2];
+
+    let request = $.ajax({
+        'url': '/remove_tag',
+        contentType: "application/json",
+        type: 'POST',
+        dataType: 'json',
+        data: JSON.stringify(tagDataForDelete),
+    })
+
+    request.done(function(response, textStatus, xhr) {
+        if (xhr.status == 200) {
+            // Remove tag
+            tagElem.remove();
+
+            // Flash success on delete of URL
+            const flashElem = flashMessageBanner(response.message, response.category);
+            flashElem.insertBefore($('.main-content'));
+
+            if ($(".tag-choice").length != 0) {
+                console.log("Tags available.")
+                let tagsForUtub = $(".tag-badge");
+                let tagChoicesForUtub = $(".tag-choice");
+                checkIfTagChoiceRemoved(tagsForUtub, tagChoicesForUtub)
+            }
+        };
+    });
+
+    request.fail(function(xhr, textStatus, error) {
+        if (xhr.status == 403) {
+            const flashMessage = xhr.responseJSON.error;
+            const flashCategory = xhr.responseJSON.category;
+
+            const flashElem = flashMessageBanner(flashMessage, flashCategory);
+            flashElem.insertBefore($('.main-content'));
+        } else {
+            console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+            console.log("Error: " + error);
+        };
+    });
+
+}
+
+function checkIfTagChoiceRemoved(tagsInUtub, tagChoices) {
+    if (tagsInUtub.length === 0) {
+        $(".tags-for-utub").empty();
+        const noTags = $('<h4></h4>').addClass('no-tags').html('No tags in this UTub. Add some!');
+        $(".tags-for-utub").append(noTags);
+        return
+    }
+    let tagIDsInUtub = new Array;
+    for (let tag of tagsInUtub) {
+        console.dir(tag)
+    }
+    // console.log(tagsInUtub)
+    // console.log(tagChoices)
+}
+
+function tagElemBuilder(tagDetails){
+    const tagElem = $('<span></span>').addClass('badge badge-pill badge-light tag-badge');
+    const tagID = tagDetails.id;
+    const tag = tagDetails.tag_string;
+    const tagNameElem = $('<span></span>').text(tag);
+    const closeButtonOuter = $('<span></span>').prop('aria-hidden', false).attr('id', 'tag' + tagID);
+    const closeButtonInner = $('<a></a>').addClass('btn btn-sm btn-outline-link border-0 tag-del').html('&times;').prop('href', '#');
+    closeButtonOuter.append(closeButtonInner)
+    tagElem.append(tagNameElem);
+    tagElem.append(closeButtonOuter);
+    return tagElem
 }
 
 /**

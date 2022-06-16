@@ -642,29 +642,59 @@ def add_tag(utub_id: int, url_id: int):
 
     return render_template('_add_tag_to_url_form.html', url_tag_form=url_tag_form)
 
-@app.route('/remove_tag/<int:utub_id>/<int:url_id>/<int:tag_id>', methods=["POST"])
+@app.route('/remove_tag', methods=["POST"])
 @login_required
-def remove_tag(utub_id: int, url_id: int, tag_id: int):
+def remove_tag():
     """
-    User wants to delete a tag from a URL contained in a UTub. Only available to owner of that utub.
+    User wants to delete a tag from a URL contained in a UTub. Only available to members of that UTub.
 
-    Args:
-        utub_id (int): The ID of the UTub that contains the URL to be deleted
-        url_id (int): The ID of the URL to be deleted
-        tag_id (int): The ID of the tag
+    JSON on POST:
+        UTubID (int): The ID of the UTub that contains the URL to be deleted
+        UrlID (int): The ID of the URL to be deleted
+        TagID (int): The ID of the tag
     """
+    json_args = dict(request.get_json())
+
+    if not json_args or 'UTubID' not in json_args or 'UrlID' not in json_args or "TagID" not in json_args:
+        flash("Something went wrong", category="danger")
+        return abort(404)
+    
+    utub_id = json_args.get('UTubID')
+    url_id = json_args.get('UrlID')
+    tag_id = json_args.get('TagID')
+
+    try:
+        utub_id = int(utub_id)
+        url_id = int(url_id)
+        tag_id = int(tag_id)
+    except ValueError:
+        flash("Something went wrong", category="danger")
+        return abort(404)
+
     utub = Utub.query.get(int(utub_id))
-    owner_id = utub.utub_creator
+    user_in_utub = [user for user in utub.members if user.user_id == int(current_user.get_id())]
+    if not user_in_utub:
+        tag_error_delete = {
+            'error': 'You do not have permission to remove this tag.',
+            'category': 'danger'
+        }
+        return jsonify(tag_error_delete), 403
 
-    if int(current_user.get_id()) == owner_id:
-        # User is creator of this UTub
-        tag_for_url_in_utub = Url_Tags.query.filter_by(utub_id=utub_id, url_id=url_id, tag_id=tag_id).first()
+    tag_for_url_in_utub = Url_Tags.query.filter_by(utub_id=utub_id, url_id=url_id, tag_id=tag_id).first()
 
-        db.session.delete(tag_for_url_in_utub)
-        db.session.commit()
-        flash("You successfully deleted the tag from the URL.", category="danger")
-        return redirect(url_for('home', UTubID=utub_id))
+    tag_error_success = {
+        "message": "Tag successfully removed",
+        "category": "success",
+        "utub_id": utub_id,
+        "utub": utub.name,
+        "removed_by": user_in_utub[0].to_user.username,
+        "url_untagged": tag_for_url_in_utub.tagged_url.url_string,
+        "tag_removed": tag_for_url_in_utub.tag_item.tag_string
+        }
 
-    return home(), 403
+    db.session.delete(tag_for_url_in_utub)
+    db.session.commit()
+
+    return jsonify(tag_error_success), 200
 
 """#####################        END TAG INVOLVED ROUTES        ###################"""

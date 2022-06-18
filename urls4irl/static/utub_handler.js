@@ -909,7 +909,6 @@ function removeTag(tagElem, tagData) {
             flashElem.insertBefore($('.main-content'));
 
             if ($(".tag-choice").length != 0) {
-                console.log("Tags available.")
                 let tagsForUtub = $(".tag-badge");
                 let tagChoicesForUtub = $(".tag-choice");
                 checkIfTagChoiceRemoved(tagsForUtub, tagChoicesForUtub)
@@ -941,10 +940,16 @@ function checkIfTagChoiceRemoved(tagsInUtub, tagChoices) {
     }
     let tagIDsInUtub = new Array;
     for (let tag of tagsInUtub) {
-        console.dir(tag)
+        tagIDsInUtub.push($(tag).attr('tag'));
+    };
+
+    // Remove the filterable choice if no longer present on any URLs on the UTub
+    for (let tagChoice of tagChoices) {
+        const tagChoiceID = $(tagChoice).attr('tag-choice')
+        if (!tagIDsInUtub.includes(tagChoiceID)) {
+            $(tagChoice).remove()
+        }
     }
-    // console.log(tagsInUtub)
-    // console.log(tagChoices)
 }
 
 function tagElemBuilder(tagDetails){

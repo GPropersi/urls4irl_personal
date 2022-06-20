@@ -25,6 +25,20 @@
                     </div>
                 {% else %}
                     {{ utub_new_url_form.url_string(class="form-control form-control-lg")}}
+                    
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ utub_new_url_form.url_description.label(class="form-control-label")}}
+                {% if utub_new_url_form.url_description.errors %}
+                    {{ utub_new_url_form.url_description(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in utub_new_url_form.url_description.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ utub_new_url_form.url_description(class="form-control form-control-lg")}}
                 {% endif %}
             </div>
         </fieldset>

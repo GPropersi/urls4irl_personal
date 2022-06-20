@@ -49,6 +49,17 @@ $(document).ready(function() {
         };
     });
 
+    $(document).on('click', '.url-card', function() {
+        const urlID = $(this).attr('id').replace('url','');
+        let utubSelections = $('.utub-names-radios :radio');
+        let selected = utubSelections.filter(found => utubSelections[found].checked);
+
+        if (!jQuery.isEmptyObject(selected)) {
+            let utubId = selected[0].id.replace('utub', '');
+            showURLInfo(utubId, urlID);
+        };
+    });
+
     // Add a member on button click
     $(document).on('click', '.add-user', function() {
         let utubSelections = $('.utub-names-radios :radio');
@@ -821,6 +832,15 @@ function deleteUTubURL(urlToDel) {
         };
     });
 };
+
+function showURLInfo(utub_id, url_id) {
+    console.log(utub_id)
+    console.log(url_id)
+    let request = $.ajax({
+        'url': '/get_url_info/' + utub_id + '-' + url_id,
+        type: 'GET'
+    })
+}
 
 function addTag(utub_id, url_id){
     let addTagRequest = $.get("/add_tag/" + utub_id + "/" + url_id, function (formHtml) {

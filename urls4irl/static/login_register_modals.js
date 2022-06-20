@@ -20,43 +20,48 @@ function modalOpener(url) {
         $('#Modal').modal();
         $('#submit').click(function (event) {
             event.preventDefault();
-            $.ajax({
+            let request = $.ajax({
                 url: url,
                 type: "POST",
-                data: $('#ModalForm').serialize(),
-                statusCode: {
-                    200: function (response) { 
-                        $('#Modal').modal('hide')
-                        window.location = response
-                    },
-                    422: function (response) {
-                        var obj = JSON.parse(response.responseJSON);
-                        $('.invalid-feedback').remove();
-                        $('.alert').remove();
-                        $('.form-control').removeClass('is-invalid');
-                        for (var key in obj) {
-                            switch (key) {
-                                case "username":
-                                case "password":
-                                case "email":
-                                case "confirm_email":
-                                case "confirm_password":
-                                    var value = obj[key];
-                                    $('<div class="invalid-feedback"><span>' + value + '</span></div>' )
-                                    .insertAfter('#' + key).show();
-                                    $('#' + key).addClass('is-invalid');
-                                    break;
-                                default:
-                                    const flash_message = obj.flash.flash_message
-                                    const flash_category = obj.flash.flash_category
-                                    $('<div class="alert alert-' + flash_category + ' alert-dismissible fade show" role="alert">' + flash_message + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="false">&times;</span></button></div>')
-                                    .insertBefore('#modal-body').show();
-                                    $('.alert-' + flash_category).css("margin-bottom", "0rem")
-                            }
+                data: $('#ModalForm').serialize()
+            });
+
+            request.done(function(response, textStatus, xhr) {
+                if (xhr.status == 200) {
+                    $('#Modal').modal('hide');
+                    window.location = response;
+                };
+            });
+
+            request.fail(function(xhr, textStatus, error) {
+                if (xhr.status == 422) {
+                    console.log("422 error")
+                    let errorResponse = JSON.parse(xhr.responseJSON);
+                    $('.invalid-feedback').remove();
+                    $('.alert').remove();
+                    $('.form-control').removeClass('is-invalid');
+                    for (var key in errorResponse) {
+                        switch (key) {
+                            case "username":
+                            case "password":
+                            case "email":
+                            case "confirm_email":
+                            case "confirm_password":
+                                let errorMessage = errorResponse[key];
+                                $('<div class="invalid-feedback"><span>' + errorMessage + '</span></div>' )
+                                .insertAfter('#' + key).show();
+                                $('#' + key).addClass('is-invalid');
+                                break;
+                            default:
+                                const flashMessage = errorResponse.flash.flashMessage
+                                const flashCategory = errorResponse.flash.flashCategory
+                                $('<div class="alert alert-' + flashCategory + ' alert-dismissible fade show" role="alert">' + flashMessage + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="false">&times;</span></button></div>')
+                                .insertBefore('#modal-body').show();
+                                $('.alert-' + flashCategory).css("margin-bottom", "0rem")
                         }
-                    },
+                    }
                 }
             });
         });
-    })
+    });
 };

@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 from sqlalchemy import true
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask import render_template, url_for, redirect, flash, request, jsonify, abort
@@ -91,7 +92,7 @@ def login():
                 flash_message = "Login Unsuccessful. Please check username and password."
                 flash_category = "danger"
                 
-                data = json.dumps({"flash": {"flash_message": flash_message, "flash_category": flash_category}}, ensure_ascii=False)
+                data = json.dumps({"flash": {"flashMessage": flash_message, "flashCategory": flash_category}}, ensure_ascii=False)
                 response_code = 422
 
         else:
@@ -512,6 +513,7 @@ def add_url(utub_id: int):
     
     if utub_new_url_form.validate_on_submit():
         url_string = utub_new_url_form.url_string.data
+        url_description = utub_new_url_form.url_description.data
 
         try:
             validated_url = check_request_head(url_string)
@@ -542,14 +544,14 @@ def add_url(utub_id: int):
                     }
                     return jsonify(add_url_error), 409
 
-                url_utub_user_add = Utub_Urls(utub_id=utub_id, url_id=already_created_url.id, user_id=int(current_user.get_id()))
+                url_utub_user_add = Utub_Urls(utub_id=utub_id, url_id=already_created_url.id, user_id=int(current_user.get_id()), url_notes=url_description)
 
             else:
                 # Else create new URL and append to the UTUB
                 new_url = URLS(url_string=validated_url, created_by=int(current_user.get_id()))
                 db.session.add(new_url)
                 db.session.commit()
-                url_utub_user_add = Utub_Urls(utub_id=utub_id, url_id=new_url.id, user_id=int(current_user.get_id()))
+                url_utub_user_add = Utub_Urls(utub_id=utub_id, url_id=new_url.id, user_id=int(current_user.get_id()), url_notes=url_description)
                 
             db.session.add(url_utub_user_add)
             db.session.commit()
@@ -558,7 +560,31 @@ def add_url(utub_id: int):
     else:
         url_errors = json.dumps(utub_new_url_form.errors, ensure_ascii=False)
         return jsonify(url_errors), 404
-        
+
+@app.route('/get_url_info/<int:utub_id>-<int:url_id>', methods=["GET"])
+@login_required
+def get_url_info(utub_id: int, url_id: int):
+    url_info_for_url_in_utub = Utub_Urls.query.filter_by(utub_id=utub_id, url_id=url_id).first_or_404()
+    users_in_utub = Utub.query.filter_by(id=utub_id).first_or_404().members
+
+    if not int(current_user.get_id()) in [int(user.user_id) for user in users_in_utub]:
+        # Not a member of this UTub
+        get_url_info_error = {
+            'error': 'Not able to process this request.',
+            'category': 'danger'
+        }
+        return jsonify(get_url_info_error), 403
+
+    print(dir(url_info_for_url_in_utub))
+    print(url_info_for_url_in_utub)
+    url_info = {
+        'urlString': url_info_for_url_in_utub.url_in_utub.url_string,
+        'urlAddedBy': url_info_for_url_in_utub.user_that_added_url.username,
+        'urlAddedAt': url_info_for_url_in_utub.added_at,
+        'canRemove': int(current_user.get_id()) == int(url_info_for_url_in_utub.user_that_added_url.id)
+    }
+    return jsonify(url_info), 200
+     
 """#####################        END URL INVOLVED ROUTES        ###################"""
 
 """#####################        TAG INVOLVED ROUTES        ###################"""

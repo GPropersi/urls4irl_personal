@@ -68,12 +68,20 @@ form {
     background: green;
 }
 
+#UrlOptionsDeck {
+    background: rgb(233, 237, 173);
+}
+
 .tag-badge {
     border-radius: 2rem;
     margin-inline: 2px;
     padding-inline: 5px;
     padding-top: 2px;
     padding-bottom: 2px;
+}
+
+#UrlOptionsDeck:active {
+    background: red;
 }
 
 .tag-del {

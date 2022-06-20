@@ -77,7 +77,6 @@ def login():
 
     else:
         if login_form.validate_on_submit():
-            print("Trying to login")
             username = login_form.username.data
             user = User.query.filter_by(username=username).first()
 
@@ -565,7 +564,7 @@ def add_url(utub_id: int):
 @login_required
 def get_url_info(utub_id: int, url_id: int):
     url_info_for_url_in_utub = Utub_Urls.query.filter_by(utub_id=utub_id, url_id=url_id).first_or_404()
-    users_in_utub = Utub.query.filter_by(id=utub_id).first_or_404().members
+    users_in_utub = Utub.query.filter_by(id=utub_id).first().members
 
     if not int(current_user.get_id()) in [int(user.user_id) for user in users_in_utub]:
         # Not a member of this UTub
@@ -575,12 +574,16 @@ def get_url_info(utub_id: int, url_id: int):
         }
         return jsonify(get_url_info_error), 403
 
-    print(dir(url_info_for_url_in_utub))
-    print(url_info_for_url_in_utub)
+    print(dir(url_info_for_url_in_utub.utub))
+    print(url_info_for_url_in_utub.utub)
     url_info = {
         'urlString': url_info_for_url_in_utub.url_in_utub.url_string,
         'urlAddedBy': url_info_for_url_in_utub.user_that_added_url.username,
         'urlAddedAt': url_info_for_url_in_utub.added_at,
+        'urlID': url_info_for_url_in_utub.url_id,
+        'urlDesc': url_info_for_url_in_utub.url_notes,
+        'utub': url_info_for_url_in_utub.utub.name,
+        'utubID': url_info_for_url_in_utub.utub_id,
         'canRemove': int(current_user.get_id()) == int(url_info_for_url_in_utub.user_that_added_url.id)
     }
     return jsonify(url_info), 200

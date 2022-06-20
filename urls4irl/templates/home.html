@@ -8,13 +8,13 @@
     const userUtubs = JSON.parse('{{utubs_for_this_user|tojson|safe}}');
 </script>
 <section class="container-fluid px-1 py-2 main-content">
-    <div class="row" style="margin: 0;">
+    <div class="row row-main-content" style="margin: 0;">
 
         <!-- Left Side Panel -->
-        <div class="col-md-2 order-2 order-md-1">
+        <div class="col-md-2 order-2 order-md-1 left-side-panel">
 
             <!-- Will be creation date ordered by default, but repositionable (preferenced order saved and stored with user) -->
-            <div id="UTubDeck" class="col-12 col-lg-12 mb-md-1 p-3 panel">
+            <div id="UTubDeck" class="col-12 col-lg-12 panel py-3">
                 <h2>UTubs</h2>
                 <div class="form-check utub-names-ids">
                     <!-- UTUB NAMES, IDS, RATIO BUTTONS HERE -->
@@ -22,7 +22,7 @@
                 <a class="btn btn-primary create-utub btn-block" style="margin-top: 10px" href="#">Make a UTub!</a>
             </div>
             <!-- Will be alpha ordered -->
-            <div id="TagDeck" class="col-12 col-lg-12 mb-md-1 p-3 panel">
+            <div id="TagDeck" class="col-12 col-lg-12 panel py-3">
                 <h2>Tags</h2>
                 <form class="tags-for-utub">
                     <!-- UTUB TAGS -->
@@ -32,11 +32,11 @@
 
         <!-- Center Panel -->
 
-        <div id="centerPanel" class="col-md-7 text-left order-2 order-md-1 mb-md-1 px-0 py-3 panel">
+        <div id="centerPanel" class="col-md-7 text-left order-2 order-md-1 px-0 panel py-3">
             <div class="row justify-content-center">
                 <div class="col-11 col-lg-11 mb-md-0">
                     <div class="row justify-content-center">
-                        <div class="col-9 col-lg-9 mb-md-0">
+                        <div class="col-9 col-lg-9 mb-md-0 utub-title-holder">
                             <h2 class="utub-title"></h2>
                         </div>
                         <div class="col-3 col-lg-3 mb-md-0 text-right">
@@ -58,20 +58,21 @@
         <!-- Right Side Panel -->
 
         <div id="rightPanel" class="col-md-3 order-3 order-md-3 panel">
-            <div id="MemberDeck" class="col-12 col-lg-12 mb-md-1 p-3 panel">
+            <div id="MemberDeck" class="col-12 col-lg-12 p-3 panel">
                 <h2>Members</h2>
-                <div id="MemberDeck" class="col-12 col-lg-12 mb-md-1 panel members-holder">
+                <div id="MemberDeck" class="col-12 col-lg-12 panel members-holder">
                     <!-- MEMBER DATA HERE -->
                 </div>
             </div>
             
                 
                 <!-- <button>Access URL</button> -->
-            <div id="UrlOptionsDeck" class="col-12 col-lg-12 mb-md-1 p-3 panel">
+            <div id="UrlOptionsDeck" class="col-12 col-lg-12 p-3 panel">
                 <h2>URL Info</h2>
+                <div id="UrlOptionsHolder" class="col-12 col-lg-12"></div>
             </div>
 
-            <div id="ChatDeck" class="col-12 col-lg-12 mb-md-1 p-3 panel">
+            <div id="ChatDeck" class="col-12 col-lg-12 p-3 panel">
                 <h2>Chat</h2>
                 <p class="lead">
                     Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque, iste molestiae

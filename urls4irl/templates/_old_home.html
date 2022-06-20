@@ -1,0 +1,124 @@
+{% extends "splash.html" %}
+{% block content %}
+
+<div class="d-flex justify-content-center flex-row">
+    <h1>Hello there  {{current_user.username}}.</h1>
+</div>
+<div class="d-flex justify-content-center flex-row">
+    <p>Find your UTubs below</p>
+</div>
+
+<script type="text/javascript">
+    var jsArrayOfItems = JSON.parse('{{utubs_for_this_user|tojson|safe}}');
+    console.log(jsArrayOfItems)
+</script>
+{% if not utubs %}
+    <div class="d-flex justify-content-center flex-row">
+        <p>No UTubs for you :(</p>
+    </div>
+
+{% else %}
+    {% for single_utub in utubs %}
+        <div class="d-flex justify-content-center flex-row">
+            <h3>UTub: {{single_utub.name}}</h3> 
+        </div>
+        {% if single_utub.created_by.id == current_user.id %}
+            <div class="d-flex justify-content-center flex-row">
+                <form action="{{url_for('delete_utub', utub_id=single_utub.id)}}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button class="btn btn-danger btn-sm mb-3 mx-3" href="">Delete this UTub</button>
+                </form>
+            </div>
+        {% endif %}
+        <div class="d-flex justify-content-center flex-row">
+            <h5>Members</h5> 
+        </div>
+        <div class="d-flex justify-content-center flex-row">
+            <ul>
+                <li>UTub Owner: {{single_utub.created_by.username}}</li>
+            {% for member in single_utub.members %}
+                <li>User in "{{single_utub.name}}": {{member.to_user.username}}</li>
+                {% if single_utub.created_by.id == current_user.id and member.user_id != single_utub.created_by.id %}
+                    <div class="d-flex justify-content-center flex-row">
+                        <form action="{{url_for('delete_user', utub_id=single_utub.id, user_id=member.user_id)}}" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button class="btn btn-danger btn-sm mb-3 mx-3" href="">Delete this User</button>
+                        </form>
+                    </div>
+                {% elif member.user_id == current_user.id and single_utub.created_by.id != current_user.id %}
+                    <div class="d-flex justify-content-center flex-row">
+                        <form action="{{url_for('delete_user', utub_id=single_utub.id, user_id=member.user_id)}}" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button class="btn btn-danger btn-sm mb-3 mx-3" href="">Leave Utub</button>
+                        </form>
+                    </div>
+                {% endif %}
+            {% endfor %}
+            </ul>
+        </div>
+        <div class="d-flex justify-content-center flex-row">
+            <h5>URLs</h5> 
+        </div>
+        <div class="d-flex justify-content-center flex-row">
+            <ul>
+            {% for link in single_utub.utub_urls %}
+                <li>Link in "{{single_utub.name}}": {{link.url_in_utub.url_string}}</li>
+                <small>Added by {{link.user_that_added_url.username}}</small>
+                    <ul>
+                        <small>Tags:</small>
+                        {% for tag in single_utub.utub_url_tags %}
+                            {% if tag.url_id == link.url_id %}
+                                <li><small>{{tag.tag_item.tag_string}}</small></li>
+                                    {% if single_utub.created_by.id == current_user.id %}
+                                        <div class="d-flex justify-content-center">
+                                                <small class="text-muted">
+                                                    <form action="{{url_for('remove_tag', utub_id=single_utub.id, url_id=link.url_id, tag_id=tag.tag_id)}}" method="post">
+                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                        <button class="btn btn-link btn-sm" href="">Delete tag</button>
+                                                    </form>
+                                                </small>
+                                        </div>
+                                    {% endif %}
+                            {% endif %}
+                        {% endfor %}              
+                    </ul>
+                    {% if link.user_id == current_user.id or single_utub.created_by.id == current_user.id %}
+                        <div class="d-flex justify-content-center flex-row">
+                            <a class="btn btn-info btn-sm col-6 mb-3 mx-3" href="{{url_for('add_tag', utub_id=single_utub.id, url_id=link.url_id)}}">Add tags</a>
+                            <form action="{{url_for('delete_url', utub_id=single_utub.id, url_id=link.url_id)}}" method="post">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button class="btn btn-danger btn-sm col-6 mb-3" href="">Delete this URL</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                <br>
+            {% endfor %}
+            </ul>
+        </div>
+        <div class="d-flex justify-content-center">
+            {% if single_utub.created_by.id == current_user.id %}
+                <div class="d-flex justify-content-center flex-row mb-5">
+                    <a class="btn btn-success btn-sm col-8 mx-3" href="{{url_for('add_user', utub_id=single_utub.id)}}">Add a user!</a>
+                    <a class="btn btn-success btn-sm col-8 mx-3" href="{{url_for('add_url', utub_id=single_utub.id)}}">Add a URL!</a>
+                </div>
+            {% else %}
+                <div class="d-flex justify-content-center flex-row mb-5">
+                    <a class="btn btn-success btn-md col-12 px-4" href="{{url_for('add_url', utub_id=single_utub.id)}}">Add a URL!</a>
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% endif %}
+<div class="d-flex justify-content-center">
+    <div class="border-top pt-1">
+        <div class="d-flex justify-content-center flex-row my-3">
+            <a class="btn btn-primary col-7 mx-3" href="{{url_for('create_utub')}}">Create a UTub!</a>
+            <a class="btn btn-primary col-4 mx-3" href="{{url_for('logout')}}">Logout</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+    <script src="{{ url_for('static', filename='login_register_modals.js') }}"></script>
+{% endblock scripts %}

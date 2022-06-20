@@ -1,0 +1,120 @@
+p {
+    color: white;
+}
+
+.added-by, .url-description {
+    color: black;
+}
+
+a {
+    color: aqua;
+}
+
+form {
+    display: flex;
+    flex-flow: column;
+}
+
+.main-content, .row-main-content {
+    /* height: calc(100vh - 80px); */
+    height: 94vh;
+    margin-bottom: -5vh;
+}
+
+#UTubDeck, #TagDeck {
+    height: 50%;
+}
+
+#centerPanel {
+    height: 100%;
+}
+
+#MemberDeck, #ChatDeck {
+    height: 40%;
+}
+
+#UrlOptionsDeck {
+    height: 20%;
+}
+
+
+.panel {
+    border-radius: 30px;
+}
+
+.utub-names-radios {
+    padding-bottom: 5px;
+}
+
+.form-check-label {
+    font-family: 'Nunito';
+    font-size: large;
+}
+
+.url-card {
+    padding: 3px;
+    margin: 2px;
+}
+
+.del-link, .add-tag {
+    margin-top: 5px;
+}
+
+.del-link {
+    margin-inline-start: 5px;
+}
+
+#UTubDeck {
+    background: red;
+}
+
+#TagDeck {
+    background: orange;
+}
+
+#centerPanel, .card {
+    background: gray;
+}
+
+#MemberDeck {
+    background: rgb(122, 122, 248);
+}
+
+#ChatDeck {
+    background: green;
+}
+
+#UrlOptionsDeck {
+    background: rgb(233, 237, 173);
+}
+
+.tag-badge {
+    border-radius: 2rem;
+    margin-inline: 2px;
+    padding-inline: 5px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+#UrlOptionsDeck:active {
+    background: red;
+}
+
+.tag-del {
+    padding: 0rem;
+    vertical-align: unset;
+    padding-left: 5px;
+    display: none;
+}
+
+.tag-badge:hover .tag-del {
+    display: inline-block;
+    line-height: 100%;
+    height: 100%;
+    font-size: 100%;
+}
+
+.tag-del:focus {
+    outline: none;
+    box-shadow: none;
+}

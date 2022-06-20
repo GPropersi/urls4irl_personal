@@ -1,0 +1,37 @@
+<script type="text/javascript">
+    if (document.querySelector('head').childElementCount === 1) {
+        window.location.href = '/';
+    };
+</script>
+
+<form id="ModalForm" name="stepForm" class="form" method="post" action="" novalidate>
+    <div class="modal-header" >
+        <h4 class="modal-title">Login!</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <div class="modal-body" id="modal-body">        
+        {{ login_form.hidden_tag() }}
+        <fieldset class="form-group">
+            <div class="form-group">
+                {{ login_form.username.label(class="form-control-label")}}
+                {{ login_form.username(class="form-control form-control-lg")}}
+            </div>
+            <div class="form-group">
+                {{ login_form.password.label(class="form-control-label")}}
+                {{ login_form.password(class="form-control form-control-lg")}}
+            </div>
+        </fieldset>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <a class="btn btn-info edit-modal-opener" data-toggle="modal" data-for-modal="{{url_for('register')}}" href="">Register</a>
+        {{ login_form.submit(class="btn btn-success")}}
+    </div>
+</form>
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='login_register_modals.js') }}"></script>
+{% endblock scripts %}

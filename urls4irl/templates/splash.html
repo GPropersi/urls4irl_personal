@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>URLS4IRL</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-backstretch/2.1.18/jquery.backstretch.min.js"></script>
+        {% block scripts_for_login %}
+            {% if not current_user.is_authenticated %}
+                <script src="{{ url_for('static', filename='login_register_modals.js') }}"></script>
+                <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+            {% else %}
+                <script src="{{ url_for('static', filename='utub_handler.js') }}"></script>
+                <meta name="csrf-token" content="{{ csrf_token() }}">
+            {% endif %}
+        {% endblock %}
+        {% block addl_css %}
+            {% if current_user.is_authenticated %}
+                <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+                <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,700" rel="stylesheet">
+            {% endif %}
+        {% endblock %}
+    </head>
+    <body>
+        {% if not current_user.is_authenticated %}
+        <div class="bg-img">
+            <!-- NAV BAR -->
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                <a class="navbar-brand" href="#">URLS4IRL</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ml-auto">
+                            <li class="nav-item">
+                                <a class="nav-link to_register" href="#">Register</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link to_login" href="#">Login</a>
+                            </li>
+                    </ul>
+                </div>
+            </nav>
+            <!-- SPLASH PAGE INTRO -->
+            <div class="container-fluid bg-cover">
+                <div class="container-fluid jumbotron-holder">
+                    <div class="jumbotron jumbotron-fluid">
+                        <div class="container">
+                            <div class="row justify-content-center">
+                                <h1 class="display-4">Welcome to URLS4IRL</h1>
+                            </div>
+                            <div class="row justify-content-center">
+                                <p class="lead">A simple, clean way to permanently save and share URLs.</p>
+                            </div>
+                            <div class="row justify-content-center">
+                                <div class="col-xl-4 col-md-8">
+                                    <a class="btn btn-info to_register btn-block splash-button"  href="#">Register</a>
+                                </div>
+                            </div>
+                            <div class="row justify-content-center my-auto">
+                                <div class="col-xl-4 col-md-8">
+                                    <a class="btn btn-info to_login btn-block splash-button" href="#">Login</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+            <!-- NAV BAR -->
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                <a class="navbar-brand" href="#">URLS4IRL</a>
+                <span class="navbar-brand mx-3 c-user" id="{{current_user.get_id()}}" href="#">Welcome, {{current_user.username}}</span>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/logout">Logout</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            {% block content %}
+            {% endblock %}
+        {% endif %}
+        {% block modal_extender %}
+        <!-- MODAL TEMPLATE -->
+            <div class="modal fade" id="Modal" tabindex="-1" role="dialog" aria-labelledby="FormModal" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <!-- MODAL CONTENT HERE -->
+                    </div>
+                </div>
+            </div>
+        {% endblock %}
+    </body>
+</html>

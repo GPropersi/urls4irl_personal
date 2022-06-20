@@ -1,122 +1,99 @@
-{% extends "layout.html" %}
+{% extends "splash.html" %}
+{% block addl_css %}
+    {{ super() }}
+{% endblock %}
+
 {% block content %}
-
-
-
-<div class="d-flex justify-content-center flex-row">
-    <h1>Hello there  {{current_user.username}}.</h1>
-</div>
-<div class="d-flex justify-content-center flex-row">
-    <p>Find your UTubs below</p>
-</div>
-
 <script type="text/javascript">
-    var jsArrayOfItems = JSON.parse('{{utubs_for_this_user|tojson|safe}}');
-    console.log(jsArrayOfItems)
+    const userUtubs = JSON.parse('{{utubs_for_this_user|tojson|safe}}');
 </script>
-{% if not utubs %}
-    <div class="d-flex justify-content-center flex-row">
-        <p>No UTubs for you :(</p>
-    </div>
-{% else %}
-    {% for single_utub in utubs %}
-        <div class="d-flex justify-content-center flex-row">
-            <h3>UTub: {{single_utub.name}}</h3> 
-        </div>
-        {% if single_utub.created_by.id == current_user.id %}
-            <div class="d-flex justify-content-center flex-row">
-                <form action="{{url_for('delete_utub', utub_id=single_utub.id)}}" method="post">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button class="btn btn-danger btn-sm mb-3 mx-3" href="">Delete this UTub</button>
+<section class="container-fluid px-1 py-2 main-content">
+    <div class="row row-main-content" style="margin: 0;">
+
+        <!-- Left Side Panel -->
+        <div class="col-md-2 order-2 order-md-1 left-side-panel">
+
+            <!-- Will be creation date ordered by default, but repositionable (preferenced order saved and stored with user) -->
+            <div id="UTubDeck" class="col-12 col-lg-12 panel py-3">
+                <h2>UTubs</h2>
+                <div class="form-check utub-names-ids">
+                    <!-- UTUB NAMES, IDS, RATIO BUTTONS HERE -->
+                </div>
+                <a class="btn btn-primary create-utub btn-block" style="margin-top: 10px" href="#">Make a UTub!</a>
+            </div>
+            <!-- Will be alpha ordered -->
+            <div id="TagDeck" class="col-12 col-lg-12 panel py-3">
+                <h2>Tags</h2>
+                <form class="tags-for-utub">
+                    <!-- UTUB TAGS -->
                 </form>
             </div>
-        {% endif %}
-        <div class="d-flex justify-content-center flex-row">
-            <h5>Members</h5> 
         </div>
-        <div class="d-flex justify-content-center flex-row">
-            <ul>
-                <li>UTub Owner: {{single_utub.created_by.username}}</li>
-            {% for member in single_utub.members %}
-                <li>User in "{{single_utub.name}}": {{member.to_user.username}}</li>
-                {% if single_utub.created_by.id == current_user.id and member.user_id != single_utub.created_by.id %}
-                    <div class="d-flex justify-content-center flex-row">
-                        <form action="{{url_for('delete_user', utub_id=single_utub.id, user_id=member.user_id)}}" method="post">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <button class="btn btn-danger btn-sm mb-3 mx-3" href="">Delete this User</button>
-                        </form>
-                    </div>
-                {% elif member.user_id == current_user.id and single_utub.created_by.id != current_user.id %}
-                    <div class="d-flex justify-content-center flex-row">
-                        <form action="{{url_for('delete_user', utub_id=single_utub.id, user_id=member.user_id)}}" method="post">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <button class="btn btn-danger btn-sm mb-3 mx-3" href="">Leave Utub</button>
-                        </form>
-                    </div>
-                {% endif %}
-            {% endfor %}
-            </ul>
-        </div>
-        <div class="d-flex justify-content-center flex-row">
-            <h5>URLs</h5> 
-        </div>
-        <div class="d-flex justify-content-center flex-row">
-            <ul>
-            {% for link in single_utub.utub_urls %}
-                <li>Link in "{{single_utub.name}}": {{link.url_in_utub.url_string}}</li>
-                <small>Added by {{link.user_that_added_url.username}}</small>
-                    <ul>
-                        <small>Tags:</small>
-                        {% for tag in single_utub.utub_url_tags %}
-                            {% if tag.url_id == link.url_id %}
-                                <li><small>{{tag.tag_item.tag_string}}</small></li>
-                                    {% if single_utub.created_by.id == current_user.id %}
-                                        <div class="d-flex justify-content-center">
-                                                <small class="text-muted">
-                                                    <form action="{{url_for('remove_tag', utub_id=single_utub.id, url_id=link.url_id, tag_id=tag.tag_id)}}" method="post">
-                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                                        <button class="btn btn-link btn-sm" href="">Delete tag</button>
-                                                    </form>
-                                                </small>
-                                        </div>
-                                    {% endif %}
-                            {% endif %}
-                        {% endfor %}              
-                    </ul>
-                    {% if link.user_id == current_user.id or single_utub.created_by.id == current_user.id %}
-                        <div class="d-flex justify-content-center flex-row">
-                            <a class="btn btn-info btn-sm col-6 mb-3 mx-3" href="{{url_for('add_tag', utub_id=single_utub.id, url_id=link.url_id)}}">Add tags</a>
-                            <form action="{{url_for('delete_url', utub_id=single_utub.id, url_id=link.url_id)}}" method="post">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <button class="btn btn-danger btn-sm col-6 mb-3" href="">Delete this URL</button>
-                            </form>
-                        </div>
-                    {% endif %}
-                <br>
-            {% endfor %}
-            </ul>
-        </div>
-        <div class="d-flex justify-content-center">
-            {% if single_utub.created_by.id == current_user.id %}
-                <div class="d-flex justify-content-center flex-row mb-5">
-                    <a class="btn btn-success btn-sm col-8 mx-3" href="{{url_for('add_user', utub_id=single_utub.id)}}">Add a user!</a>
-                    <a class="btn btn-success btn-sm col-8 mx-3" href="{{url_for('add_url', utub_id=single_utub.id)}}">Add a URL!</a>
-                </div>
-            {% else %}
-                <div class="d-flex justify-content-center flex-row mb-5">
-                    <a class="btn btn-success btn-md col-12 px-4" href="{{url_for('add_url', utub_id=single_utub.id)}}">Add a URL!</a>
-                </div>
-            {% endif %}
-        </div>
-    {% endfor %}
-{% endif %}
-<div class="d-flex justify-content-center">
-    <div class="border-top pt-1">
-        <div class="d-flex justify-content-center flex-row my-3">
-            <a class="btn btn-primary col-7 mx-3" href="{{url_for('create_utub')}}">Create a UTub!</a>
-            <a class="btn btn-primary col-4 mx-3" href="{{url_for('logout')}}">Logout</a>
-        </div>
-    </div>
-</div>
 
+        <!-- Center Panel -->
+
+        <div id="centerPanel" class="col-md-7 text-left order-2 order-md-1 px-0 panel py-3">
+            <div class="row justify-content-center">
+                <div class="col-11 col-lg-11 mb-md-0">
+                    <div class="row justify-content-center">
+                        <div class="col-9 col-lg-9 mb-md-0 utub-title-holder">
+                            <h2 class="utub-title"></h2>
+                        </div>
+                        <div class="col-3 col-lg-3 mb-md-0 text-right">
+                            <button type="button" class="btn btn-primary btn-lg btn-block add-url">
+                                Add a URL!
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="col-12 col-lg-12 mb-md-0 utub-holder">
+                            <!-- UTUB DATA HERE -->
+                        </div>
+                    </div> 
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Right Side Panel -->
+
+        <div id="rightPanel" class="col-md-3 order-3 order-md-3 panel">
+            <div id="MemberDeck" class="col-12 col-lg-12 p-3 panel">
+                <h2>Members</h2>
+                <div id="MemberDeck" class="col-12 col-lg-12 panel members-holder">
+                    <!-- MEMBER DATA HERE -->
+                </div>
+            </div>
+            
+                
+                <!-- <button>Access URL</button> -->
+            <div id="UrlOptionsDeck" class="col-12 col-lg-12 p-3 panel">
+                <h2>URL Info</h2>
+                <div id="UrlOptionsHolder" class="col-12 col-lg-12"></div>
+            </div>
+
+            <div id="ChatDeck" class="col-12 col-lg-12 p-3 panel">
+                <h2>Chat</h2>
+                <p class="lead">
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque, iste molestiae
+                    beatae, maiores deserunt
+                    in voluptatibus
+                    aspernatur architecto excepturi delectus soluta? Ipsa, deleniti dolorem hic consequatur
+                    repellat eveniet quidem
+                    voluptate necessitatibus dolorum delectus minus vitae, ut, veritatis sint ipsum magnam
+                    autem nam ex deserunt debitis
+                    eaque ratione! Nobis, quidem assumenda.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+</section>
 {% endblock %}
+
+{% block modal_extender %}
+    {{ super() }}
+{% endblock %}
+
+

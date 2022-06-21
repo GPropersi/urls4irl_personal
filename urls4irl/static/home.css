@@ -53,12 +53,14 @@ form {
 }
 
 .url-card {
-    padding: 3px;
-    margin: 2px;
+    padding: 2px;
+    margin: 1px;
 }
 
-.url-card:activate {
-    background: red;
+.url-card-body {
+    padding-left: 15px;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 .del-link, .add-tag {

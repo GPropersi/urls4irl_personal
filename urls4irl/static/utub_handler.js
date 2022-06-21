@@ -86,6 +86,11 @@ $(document).ready(function() {
         };
     });
 
+    $(document).on('click', '.member-card', function() {
+        $('.member-card').css('background', 'gray');
+        $(this).css('background', 'silver');
+    })
+
     // Remove UTub on click
     $(document).on('click', '.delete-utub', function () {
         let utubSelections = $('.utub-names-radios :radio');
@@ -295,7 +300,7 @@ function displayMembers(utubMembers, currentUser, creator) {
             continue
         };
 
-        let memberCard = $('<div></div>').addClass('card');
+        let memberCard = $('<div></div>').addClass('card member-card');
         let memberCardBody = $('<div></div>').addClass('card-body');
         let memberCardBodyRow = $('<div></div>').addClass('row justify-content-center');
 
@@ -334,22 +339,29 @@ function displayMembers(utubMembers, currentUser, creator) {
     };
 
     if (currentUser == creator) {
-        $('.add-user').remove()
-        let addUserButton = $('<a></a>').attr({
-            'class': 'btn btn-primary btn-sm py-0 px-5 add-user',
+        $('.add-user').remove();
+        let addUserButton = $('<a></a>').addClass("btn btn-primary py-0 px-5 add-user col-7").attr({
             'href': '#'
         });
-        addUserButton.html("Add a User!")
-        memberDeck.append(addUserButton)
+        addUserButton.text("Add a User!");
+        $('.member-buttons').append(addUserButton);
+
+        let removeUserButton = $('<a></a>').attr({
+            'class': 'btn btn-warning btn py-0 remove-user remove-self col-4 offset-1',
+            'href': '#',
+            'id': 'user' + currentUser
+        });
+        removeUserButton.text("Remove User");
+        $('.member-buttons').append(removeUserButton);
     } else {
         $('.remove-self').remove()
         let removeSelfButton = $('<a></a>').attr({
-            'class': 'btn btn-warning btn-sm py-0 remove-user remove-self',
+            'class': 'btn btn-warning btn-sm py-0 remove-user remove-self col-4',
             'href': '#',
             'id': 'user' + currentUser
         });
         removeSelfButton.html("Leave this UTub")
-        memberDeck.append(removeSelfButton)
+        $('.member-buttons').append(removeSelfButton);
     }
 };
 

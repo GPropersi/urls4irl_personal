@@ -27,14 +27,13 @@ This is my first web app and I am excited to share it with the world! Come watch
 > In no particular order
 
 - [ ] **Frontend** 
-    - [ ] Show all members of a UTub
-    - [ ] Make frontend AJAX call to add URLs to a UTub
     - [ ] Show URLs in a UTub filtered on user selected tag or tags
     - [ ] Tidy up homepage
 - [ ] **Backend** 
     - [ ] Migrating SQLite to PostgreSQL
     - [ ] RestAPI development to lead into mobile app development
 - [ ] Error routing/Custom error page
+    - [x] Most http errors are shown in a banner, however 404 will require it's own unique page 
 - [ ] Email confirmation/registration
 - [ ] Instant messaging system per UTub
 - [ ] Hosting this on Heroku
@@ -54,6 +53,8 @@ This is my first web app and I am excited to share it with the world! Come watch
     - [x] Asynchronously loads another UTub based on user selection
     - [x] User can add a UTub
     - [x] User can remove a URL
+    - [x] Show all members of a UTub
+    - [x] Make frontend AJAX call to add URLs to a UTub
 - [x] **Backend (So Far)** 
     - [x] Backend routing for basic User/UTub/URLs/Tag functionalities
     - [x] Correct permissions for certain events:
@@ -67,3 +68,9 @@ This is my first web app and I am excited to share it with the world! Come watch
     - [x] Verification that the URL is valid
     - [x] Database tables with all many-to-many relationships considered
     - [x] Login/Logout/Registration capability
+
+## :hammer: Challenges
+- [X] Integrate AJAX requests with Flask-WTF and modals to correctly display user input errors
+- [X] Migrate the SQLite database when changes had to be made instead of deleting and recreating the database
+- [X] Implementing CRUD operations on nested components
+    - i.e. for a tag, on a url, contained in a UTub

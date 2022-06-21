@@ -50,7 +50,9 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '.url-card', function() {
+        $('.url-card').css('background', 'none');
         const urlID = $(this).attr('id').replace('url','');
+        $(this).css('background', 'silver');
         let utubSelections = $('.utub-names-radios :radio');
         let selected = utubSelections.filter(found => utubSelections[found].checked);
 
@@ -122,36 +124,25 @@ function loadUtubData(userUtubs) {
     };
 
     const firstUtubId = putUtubNames(utubNames);
-    getUtubInfo(firstUtubId, userUtubs);
-
+    getUtubInfo(firstUtubId);
 };
 
 /**
- * Makes a GET request from backend to receive the selected UTub's data, sends to displayUtubData
+ * Makes a GET request promise from backend to receive the selected UTub's data, sends to displayUtubData
  * @function getUtubInfo
  * @param {string} utubId - The ID of this UTub to receive data for
  */
 function getUtubInfo(utubId) {
-    let request = $.ajax({
+    return $.get({
         url: '/home?UTubID=' + utubId,
-        type: 'GET',
         dataType: 'json'
-    });
-
-    request.done(function(utubData, textStatus, xhr) {
+    }).then(function(utubData, textStatus, xhr){ 
         if (xhr.status == 200) {
-            userHasUtubs(true);
             displayUtubData(utubData);
         };
-    });
-
-    request.fail(function(xhr, textStatus, error) {
+    }).fail(function(xhr, textStatus, error){
         if (xhr.status == 403) {
-            const flashMessage = xhr.responseJSON.error;
-            const flashCategory = xhr.responseJSON.category;
-
-            const flashElem = flashMessageBanner(flashMessage, flashCategory);
-            flashElem.insertBefore($('.main-content'));
+            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category);
         } else {
             console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
             console.log("Error: " + error);
@@ -185,6 +176,7 @@ function userHasUtubs(hasUTubs){
  * @param {JSON} utubData JSON data containing all UTub information for this user
  */
 function displayUtubData(utubData) {
+    userHasUtubs(true);
     let name = utubData.name;
     let desc = utubData.description;
     let urls = utubData.urls;
@@ -194,11 +186,12 @@ function displayUtubData(utubData) {
     $('.no-urls').remove();
     $('.utub-description').remove();
     $('.url-card').remove();
+    let noUrlSelected = $("<p></p>").addClass("url-description").text("Add/Select a URL!");
+    $('#UrlOptionsHolder').empty().append(noUrlSelected);
 
     $(".utub-title").text(name);
     $(".utub-title").attr('name', 'utub' + utubData.id);
     let utubDescription = $(".utub-description");
-    
     
     if (utubDescription.length == 0) {
         utubDescription = $('<p></p>').addClass('lead').addClass('utub-description').html(desc);
@@ -218,8 +211,6 @@ function displayUtubData(utubData) {
                 continue;
             };
 
-            let urlAdderID = url.added_by
-            let urlAdder = members.find(element => element.id === urlAdderID);
             let urlName = url.url_string;
             let urlTags = url.url_tags;
             let urlCard = $('<div></div>').addClass("card url-card").attr({
@@ -234,11 +225,8 @@ function displayUtubData(utubData) {
             });
             urlLink.html(urlName);
 
-            let addedBy = $('<p></p>').addClass("card-text");
-            addedBy.html('Added by: ' + urlAdder.username);
-
             innerUrlCard.append(urlLink);
-            innerUrlCard.append(addedBy);
+            innerUrlCard.append($("<br>"))
             
             // Check if url has tags, and if so, append the elements
             if (urlTags.length !== 0) {
@@ -259,28 +247,6 @@ function displayUtubData(utubData) {
                     tagSpan.append(tagBadge);
                 };
                 innerUrlCard.append('<br>');
-            };
-
-            let addTag = $('<a></a>').attr({
-                'class': 'btn btn-primary btn-sm py-0 px-5 add-tag',
-                'href': '#',
-                'id': utubData.id + '-' + url.url_id
-            });
-
-            addTag.html('Add Tag');
-            innerUrlCard.append(addTag);
-            
-            // Check if URL was added by current user, or if the user was the creator of this UTub
-            // If so, they can delete the URL, so add a button for this
-            if (currentUser == urlAdderID || currentUser == utubData.created_by) {
-                let deleteUrl = $('<a></a>').attr({
-                    'class': 'btn btn-warning btn-sm py-0 del-link',
-                    'href': '#',
-                    'id': utubData.id + '-' + url.url_id
-                });
-
-                deleteUrl.html('Remove URL');
-                innerUrlCard.append(deleteUrl);
             };
 
             $(".utub-holder").append(urlCard);
@@ -307,7 +273,7 @@ function displayUtubData(utubData) {
 function addDeleteUTubButton() {
     const delUTub = $('<btn></btn>').addClass('delete-utub').html("Delete UTub");
     delUTub.addClass('btn').addClass('btn-warning').addClass('btn-block').css("margin-top", "10px");
-    $("#UTubDeck").append(delUTub);
+    $(".utub-buttons").append(delUTub);
 }
 
 /**
@@ -666,8 +632,7 @@ function deleteUtub(utubID) {
     request.done(function(response, textStatus, xhr) {
         if (xhr.status == 200) {
             // Flash success on delete of UTub
-            const flashElem = flashMessageBanner(response.message, response.category)
-            flashElem.insertBefore($('.main-content'))
+            globalFlashBanner(response.message, response.category)
             let utubSelections = $('.utub-names-radios :radio');
             let selected = utubSelections.filter(found => utubSelections[found].checked);
 
@@ -697,11 +662,7 @@ function deleteUtub(utubID) {
 
     request.fail(function(xhr, textStatus, error) {
         if (xhr.status === 403) {
-            const flashMessage = xhr.responseJSON.error;
-            const flashCategory = xhr.responseJSON.category;
-    
-            const flashElem = flashMessageBanner(flashMessage, flashCategory);
-            flashElem.insertBefore($('.main-content'));
+            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category)
         } else {
             console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
             console.log("Error: " + error);
@@ -799,8 +760,7 @@ function deleteUTubURL(urlToDel) {
             $(cardToDel).remove();
 
             // Flash success on delete of URL
-            const flashElem = flashMessageBanner(response.message, response.category)
-            flashElem.insertBefore($('.main-content'))
+            globalFlashBanner(response.message, response.category);
 
             // Remove URL card
             const urlCards = $('.url-card');
@@ -808,17 +768,16 @@ function deleteUTubURL(urlToDel) {
                 const utubHolder= $(".utub-holder");
                 const noURLs = $('<h4></h4>').addClass('no-urls').append('<h4>No URLs found. Add one!</h4>');
                 utubHolder.append(noURLs);
-            }
+            };
+
+            let noUrlSelected = $("<p></p>").addClass("url-description").text("Add/Select a URL!");
+            $('#UrlOptionsHolder').empty().append(noUrlSelected);
         };
     });
 
     request.fail(function(xhr, textStatus, error) {
         if (xhr.status == 403) {
-            const flashMessage = xhr.responseJSON.error;
-            const flashCategory = xhr.responseJSON.category;
-
-            const flashElem = flashMessageBanner(flashMessage, flashCategory);
-            flashElem.insertBefore($('.main-content'));
+            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category)
         } else {
             console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
             console.log("Error: " + error);
@@ -839,11 +798,7 @@ function getURLInfo(utubID, urlID) {
 
     request.fail(function(xhr, textStatus, error){
         if (xhr.status == 403) {
-            const flashMessage = xhr.responseJSON.error;
-            const flashCategory = xhr.responseJSON.category;
-
-            const flashElem = flashMessageBanner(flashMessage, flashCategory);
-            flashElem.insertBefore($('.main-content'));
+            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category)
         } else {
             console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
             console.log("Error: " + error);
@@ -855,22 +810,22 @@ function showURLInfo(urlInfo) {
     $("#UrlOptionsHolder").empty();
     let addedBy = $('<p></p>').addClass("added-by").css('display', 'inline');
     addedBy.text('Added by: ' + urlInfo.urlAddedBy);
-    $("#UrlOptionsHolder").append(addedBy)
+    $("#UrlOptionsHolder").append(addedBy);
 
     let urlDescription = $('<p></p>').addClass("url-description");
     if (urlInfo.urlDesc) {
         urlDescription.text(urlInfo.urlDesc);
     } else {
         urlDescription.text("No description available.");
-    }
-    $("#UrlOptionsHolder").append(urlDescription)
+    };
+    $("#UrlOptionsHolder").append(urlDescription);
 
     let addTag = $('<a></a>').addClass("btn btn-primary btn-sm py-0 px-5 add-tag").attr({
         'href': '#',
         'id': urlInfo.utubID + '-' + urlInfo.urlID
     });
     addTag.text("Add Tag");
-    $("#UrlOptionsHolder").append(addTag)
+    $("#UrlOptionsHolder").append(addTag);
 
     if (urlInfo.canRemove) {
         let deleteUrl = $('<a></a>').addClass("btn btn-warning btn-sm py-0 del-link").attr({
@@ -878,10 +833,9 @@ function showURLInfo(urlInfo) {
             'id': urlInfo.utubID + '-' + urlInfo.urlID
         });
         deleteUrl.text('Remove URL');
-        $("#UrlOptionsHolder").append(deleteUrl)
-    }
-    console.log(urlInfo)
-}
+        $("#UrlOptionsHolder").append(deleteUrl);
+    };
+};
 
 function addTag(utubID, urlID){
     let addTagRequest = $.get("/add_tag/" + utubID + "/" + urlID, function (formHtml) {
@@ -901,12 +855,13 @@ function addTag(utubID, urlID){
             request.done(function(addTagSuccess, textStatus, xhr) {
                 if (xhr.status == 200) {
                     $('#Modal').modal('hide');
-                    getUtubInfo(addTagSuccess.utubID);
-                    const flashMessage = addTagSuccess.message;
-                    const flashCategory = addTagSuccess.category;
 
-                    const flashElem = flashMessageBanner(flashMessage, flashCategory);
-                    flashElem.insertBefore($('.main-content'));
+                    getUtubInfo(addTagSuccess.utubID)
+                        .then(function(result) {
+                            $("#url" + urlID).css('background', 'silver');
+                        });
+                    
+                    globalFlashBanner(addTagSuccess.message, addTagSuccess.category)
                 }; 
             });
         
@@ -936,11 +891,7 @@ function addTag(utubID, urlID){
 
     addTagRequest.fail(function(xhr, textStatus, error) {
         if (xhr.status == 403) {
-            const flashMessage = xhr.responseJSON.error;
-            const flashCategory = xhr.responseJSON.category;
-
-            const flashElem = flashMessageBanner(flashMessage, flashCategory);
-            flashElem.insertBefore($('.main-content'));
+            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category)
         };
     });
 }
@@ -966,8 +917,7 @@ function removeTag(tagElem, tagData) {
             tagElem.remove();
 
             // Flash success on delete of URL
-            const flashElem = flashMessageBanner(response.message, response.category);
-            flashElem.insertBefore($('.main-content'));
+            globalFlashBanner(response.message, response.category);
 
             if ($(".tag-choice").length != 0) {
                 let tagsForUtub = $(".tag-badge");
@@ -979,11 +929,7 @@ function removeTag(tagElem, tagData) {
 
     request.fail(function(xhr, textStatus, error) {
         if (xhr.status == 403) {
-            const flashMessage = xhr.responseJSON.error;
-            const flashCategory = xhr.responseJSON.category;
-
-            const flashElem = flashMessageBanner(flashMessage, flashCategory);
-            flashElem.insertBefore($('.main-content'));
+            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category);
         } else {
             console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
             console.log("Error: " + error);
@@ -1054,5 +1000,19 @@ function flashMessageBanner(message, category) {
 
     flashElem.append(closeButton);
     flashElem.css("margin-bottom", "0rem");
+
+    $(flashElem).fadeTo(2000, 500).slideUp(500, function(){
+        $(flashElem).slideUp(500);
+    });
+    
     return flashElem;
+};
+
+function globalFlashBanner(flashMessage, flashCategory) {
+    const flashElem = flashMessageBanner(flashMessage, flashCategory);
+    let currHeight = $('.row-main-content').height();
+    flashElem.insertBefore($('.main-content'));
+    let newHeight = currHeight - 50
+    $('html').css('height', newHeight + 'px');
+    $('.row-main-content').css('height', newHeight + 'px )');
 };

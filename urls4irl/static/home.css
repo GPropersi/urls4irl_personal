@@ -1,3 +1,7 @@
+html {
+    overflow-y: hidden;
+}
+
 p {
     color: white;
 }
@@ -16,9 +20,7 @@ form {
 }
 
 .main-content, .row-main-content {
-    /* height: calc(100vh - 80px); */
     height: 94vh;
-    margin-bottom: -5vh;
 }
 
 #UTubDeck, #TagDeck {
@@ -37,7 +39,6 @@ form {
     height: 20%;
 }
 
-
 .panel {
     border-radius: 30px;
 }
@@ -54,6 +55,10 @@ form {
 .url-card {
     padding: 3px;
     margin: 2px;
+}
+
+.url-card:activate {
+    background: red;
 }
 
 .del-link, .add-tag {
@@ -94,10 +99,6 @@ form {
     padding-inline: 5px;
     padding-top: 2px;
     padding-bottom: 2px;
-}
-
-#UrlOptionsDeck:active {
-    background: red;
 }
 
 .tag-del {

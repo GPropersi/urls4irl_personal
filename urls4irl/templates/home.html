@@ -12,14 +12,21 @@
 
         <!-- Left Side Panel -->
         <div class="col-md-2 order-2 order-md-1 left-side-panel">
-
             <!-- Will be creation date ordered by default, but repositionable (preferenced order saved and stored with user) -->
-            <div id="UTubDeck" class="col-12 col-lg-12 panel py-3">
+            <div id="UTubDeck" class="col-12 col-lg-12 panel py-3 d-flex flex-column">
                 <h2>UTubs</h2>
-                <div class="form-check utub-names-ids">
-                    <!-- UTUB NAMES, IDS, RATIO BUTTONS HERE -->
+                <div class="row">
+                    <div class="col-12 col-lg-12">
+                        <div class="form-check utub-names-ids">
+                            <!-- UTUB NAMES, IDS, RATIO BUTTONS HERE -->
+                        </div>
+                    </div>
                 </div>
-                <a class="btn btn-primary create-utub btn-block" style="margin-top: 10px" href="#">Make a UTub!</a>
+                <div class="row mt-auto">
+                    <div class="col-12 col-lg-12 utub-buttons">
+                        <a class="btn btn-primary create-utub btn-block align-bottom" style="margin-top: 10px" href="#">Make a UTub!</a>
+                    </div>
+                </div>    
             </div>
             <!-- Will be alpha ordered -->
             <div id="TagDeck" class="col-12 col-lg-12 panel py-3">

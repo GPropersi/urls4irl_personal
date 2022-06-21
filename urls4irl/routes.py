@@ -407,8 +407,8 @@ def add_user(utub_id: int):
 
         if already_in_utub:
             return jsonify({
-                'Error': 'User already in this UTub.',
-                'Category': 'danger'}), 400
+                'error': 'User already in this UTub.',
+                'category': 'danger'}), 400
            
         else:
             new_user_to_utub = Utub_Users()
@@ -574,8 +574,6 @@ def get_url_info(utub_id: int, url_id: int):
         }
         return jsonify(get_url_info_error), 403
 
-    print(dir(url_info_for_url_in_utub.utub))
-    print(url_info_for_url_in_utub.utub)
     url_info = {
         'urlString': url_info_for_url_in_utub.url_in_utub.url_string,
         'urlAddedBy': url_info_for_url_in_utub.user_that_added_url.username,

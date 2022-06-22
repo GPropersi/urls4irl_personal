@@ -29,6 +29,7 @@ This is my first web app and I am excited to share it with the world! Come watch
 - [ ] **Frontend** 
     - [ ] Show URLs in a UTub filtered on user selected tag or tags
     - [ ] Tidy up homepage
+    - [ ] Scrollable Divs for each Panel
 - [ ] **Backend** 
     - [ ] Migrating SQLite to PostgreSQL
     - [ ] RestAPI development to lead into mobile app development

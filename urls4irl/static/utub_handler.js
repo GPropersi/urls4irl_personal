@@ -192,7 +192,9 @@ function displayUtubData(utubData) {
     $('.utub-description').remove();
     $('.url-card').remove();
     let noUrlSelected = $("<p></p>").addClass("url-description").text("Add/Select a URL!");
-    $('#UrlOptionsHolder').empty().append(noUrlSelected);
+    $('.url-info').empty().append(noUrlSelected);
+    $('.url-buttons').empty();
+    $('.member-buttons').empty();
 
     $(".utub-title").text(name);
     $(".utub-title").attr('name', 'utub' + utubData.id);
@@ -346,21 +348,19 @@ function displayMembers(utubMembers, currentUser, creator) {
         addUserButton.text("Add a User!");
         $('.member-buttons').append(addUserButton);
 
-        let removeUserButton = $('<a></a>').attr({
-            'class': 'btn btn-warning btn py-0 remove-user remove-self col-4 offset-1',
+        let removeUserButton = $('<a></a>').addClass("btn btn-warning btn py-0 remove-user col-4 offset-1").attr({
             'href': '#',
             'id': 'user' + currentUser
         });
         removeUserButton.text("Remove User");
         $('.member-buttons').append(removeUserButton);
     } else {
-        $('.remove-self').remove()
-        let removeSelfButton = $('<a></a>').attr({
-            'class': 'btn btn-warning btn-sm py-0 remove-user remove-self col-4',
+        $('.remove-self').remove();
+        let removeSelfButton = $('<a></a>').addClass("btn btn-warning btn-sm py-0 remove-self col-4").attr({
             'href': '#',
             'id': 'user' + currentUser
         });
-        removeSelfButton.html("Leave this UTub")
+        removeSelfButton.html("Leave this UTub");
         $('.member-buttons').append(removeSelfButton);
     }
 };
@@ -573,8 +573,8 @@ function createUtub() {
             request.done(function(response, textStatus, xhr) {
                 if (xhr.status == 200) {
                     $('#Modal').modal('hide');
-                    const flashElem = flashMessageBanner(response.message, response.category);
-                    flashElem.insertBefore($('.main-content'));
+                    globalFlashBanner(response.message, response.category);
+
                     
                     let utubRadio = $('<input>');
                     utubRadio.addClass('form-check-input');
@@ -819,10 +819,11 @@ function getURLInfo(utubID, urlID) {
 };
 
 function showURLInfo(urlInfo) {
-    $("#UrlOptionsHolder").empty();
+    $(".url-info").empty();
+    $(".url-buttons").empty();
     let addedBy = $('<p></p>').addClass("added-by").css('display', 'inline');
     addedBy.text('Added by: ' + urlInfo.urlAddedBy);
-    $("#UrlOptionsHolder").append(addedBy);
+    $(".url-info").append(addedBy);
 
     let urlDescription = $('<p></p>').addClass("url-description");
     if (urlInfo.urlDesc) {
@@ -830,14 +831,14 @@ function showURLInfo(urlInfo) {
     } else {
         urlDescription.text("No description available.");
     };
-    $("#UrlOptionsHolder").append(urlDescription);
+    $(".url-info").append(urlDescription);
 
     let addTag = $('<a></a>').addClass("btn btn-primary btn-sm py-0 px-5 add-tag").attr({
         'href': '#',
         'id': urlInfo.utubID + '-' + urlInfo.urlID
     });
     addTag.text("Add Tag");
-    $("#UrlOptionsHolder").append(addTag);
+    $(".url-buttons").append(addTag);
 
     if (urlInfo.canRemove) {
         let deleteUrl = $('<a></a>').addClass("btn btn-warning btn-sm py-0 del-link").attr({
@@ -845,7 +846,7 @@ function showURLInfo(urlInfo) {
             'id': urlInfo.utubID + '-' + urlInfo.urlID
         });
         deleteUrl.text('Remove URL');
-        $("#UrlOptionsHolder").append(deleteUrl);
+        $(".url-buttons").append(deleteUrl);
     };
 };
 
@@ -1011,7 +1012,9 @@ function flashMessageBanner(message, category) {
     closeButton.append('<span aria-hidden="false">&times;</span>');
 
     flashElem.append(closeButton);
-    flashElem.css("margin-bottom", "0rem");
+    flashElem.css({
+        "margin-bottom": "0rem",
+    });
 
     $(flashElem).fadeTo(2000, 500).slideUp(500, function(){
         $(flashElem).slideUp(500);
@@ -1022,9 +1025,10 @@ function flashMessageBanner(message, category) {
 
 function globalFlashBanner(flashMessage, flashCategory) {
     const flashElem = flashMessageBanner(flashMessage, flashCategory);
-    let currHeight = $('.row-main-content').height();
+    $(flashElem).css({
+        "z-index": 1,
+        "position": "fixed",
+        "width": "100%"
+    });
     flashElem.insertBefore($('.main-content'));
-    let newHeight = currHeight - 50
-    $('html').css('height', newHeight + 'px');
-    $('.row-main-content').css('height', newHeight + 'px )');
 };

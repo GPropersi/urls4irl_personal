@@ -21,6 +21,7 @@ form {
 
 .main-content, .row-main-content {
     height: 94vh;
+    z-index: -1;
 }
 
 #UTubDeck, #TagDeck {
@@ -42,6 +43,12 @@ form {
 .panel {
     border-radius: 30px;
 }
+
+.utub-row {
+    height: 40vh;
+    overflow-y: auto;
+}
+
 
 .utub-names-radios {
     padding-bottom: 5px;

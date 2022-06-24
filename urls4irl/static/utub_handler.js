@@ -49,6 +49,7 @@ $(document).ready(function() {
         };
     });
 
+    // On URL card selection show URL info
     $(document).on('click', '.url-card', function() {
         $('.url-card').css('background', 'none');
         const urlID = $(this).attr('id').replace('url','');
@@ -75,7 +76,7 @@ $(document).ready(function() {
 
     // Remove member on button click
     $(document).on('click', '.remove-user', function () {
-        let userToRemove = $(this).attr('id').replace('user', '');
+        let userToRemove = $(this).attr('user');
 
         let utubSelections = $('.utub-names-radios :radio');
         let selected = utubSelections.filter(found => utubSelections[found].checked);
@@ -86,9 +87,24 @@ $(document).ready(function() {
         };
     });
 
+    // On click of a member card
     $(document).on('click', '.member-card', function() {
         $('.member-card').css('background', 'gray');
-        $(this).css('background', 'silver');
+        let selectedUser = $(this).css('background', 'silver');
+        let selectedUserId = selectedUser.attr('id').replace('user','');
+        let currentUser = $('.c-user').attr('id');
+        let creator = $('[creator]').attr('id').replace('user','');
+
+        let removeUserButton = $('.remove-user');
+        if (selectedUserId != currentUser || selectedUserId != creator) {
+            removeUserButton.removeClass('disabled').attr('user', selectedUserId)
+        } else {
+            removeUserButton.addClass('disabled').removeAttr('user');
+        };
+
+        console.log(selectedUser)
+        console.log($('[creator]'))
+
     })
 
     // Remove UTub on click
@@ -306,29 +322,17 @@ function displayMembers(utubMembers, currentUser, creator) {
         let memberCardBody = $('<div></div>').addClass('card-body');
         let memberCardBodyRow = $('<div></div>').addClass('row justify-content-center');
 
-        let cardText = member.username
+        let cardText = member.username;
+        memberCard.attr("username", member.username);
 
         if (creator === member.id) {
             cardText = cardText + " (Creator)";
+            memberCard.attr("creator", true);
         };
 
         let memberUsername = $('<div></div>').addClass('col-12')
         memberUsername.text(cardText)
         memberCardBodyRow.append(memberUsername)
-
-        if (currentUser == creator && creator !== member.id) {
-            memberUsername.removeClass('col-12').addClass('col-9')
-            let removeDiv = $('<div></div>').addClass('col-3 d-flex justify-content-end')
-            let removeUserButton = $('<a></a>').addClass("btn btn-warning btn-sm py-0 remove-user ").attr({
-                'href': '#',
-                'id': 'user' + member.id
-            })
-            removeUserButton.text("Remove")
-            removeDiv.append(removeUserButton)
-            memberCardBodyRow.append(removeDiv)
-        }
-
-        
         memberCard.append(memberCardBody);
         memberCardBody.append(memberCardBodyRow)
 
@@ -340,6 +344,10 @@ function displayMembers(utubMembers, currentUser, creator) {
         memberCard.css("height", "4rem");
     };
 
+    let removeUserButton = $('<a></a>').addClass("btn btn-warning btn py-0 remove-user col-4 offset-1").attr({
+        'href': '#',
+    });
+
     if (currentUser == creator) {
         $('.add-user').remove();
         let addUserButton = $('<a></a>').addClass("btn btn-primary py-0 px-5 add-user col-7").attr({
@@ -347,22 +355,13 @@ function displayMembers(utubMembers, currentUser, creator) {
         });
         addUserButton.text("Add a User!");
         $('.member-buttons').append(addUserButton);
-
-        let removeUserButton = $('<a></a>').addClass("btn btn-warning btn py-0 remove-user col-4 offset-1").attr({
-            'href': '#',
-            'id': 'user' + currentUser
-        });
-        removeUserButton.text("Remove User");
-        $('.member-buttons').append(removeUserButton);
+        removeUserButton.text("Remove User").addClass("disabled");
     } else {
         $('.remove-self').remove();
-        let removeSelfButton = $('<a></a>').addClass("btn btn-warning btn-sm py-0 remove-self col-4").attr({
-            'href': '#',
-            'id': 'user' + currentUser
-        });
-        removeSelfButton.html("Leave this UTub");
-        $('.member-buttons').append(removeSelfButton);
-    }
+        removeUserButton.text("Leave this UTub");
+        removeUserButton.removeClass('col-4 offset-1').addClass('btn-block');
+    };
+    $('.member-buttons').append(removeUserButton);
 };
 
 /**
@@ -389,7 +388,9 @@ function removeMemberFromUtub(userID, utubID) {
     request.done(function(xml, textStatus, xhr) {
         if (xhr.status == 200) {
             let cardToDel = '#user' + userID;
+            const usernameToRemove = $(cardToDel).attr("username");
             $(cardToDel).remove();
+            globalFlashBanner(usernameToRemove +" removed from this UTub.", "info")
         };
     });
 
@@ -398,8 +399,7 @@ function removeMemberFromUtub(userID, utubID) {
             const flashMessage = xhr.responseJSON.error;
             const flashCategory = xhr.responseJSON.category;
 
-            const flashElem = flashMessageBanner(flashMessage, flashCategory);
-            flashElem.insertBefore($('.main-content'));
+            globalFlashBanner(flashMessage, flashCategory);
         } else {
             console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
             console.log("Error: " + error);
@@ -465,8 +465,7 @@ function addMemberToUtub(utubID) {
             const flashMessage = xhr.responseJSON.error;
             const flashCategory = xhr.responseJSON.category;
 
-            const flashElem = flashMessageBanner(flashMessage, flashCategory);
-            flashElem.insertBefore($('.main-content'));
+            globalFlashBanner(flashMessage, flashCategory);
         }
     })
 };

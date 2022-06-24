@@ -1,4 +1,5 @@
 html {
+    height: 100%;
     overflow-y: hidden;
 }
 
@@ -25,7 +26,8 @@ form {
 }
 
 #UTubDeck, #TagDeck {
-    height: 50%;
+    min-height: calc(94vh / 2);
+    height: calc(94vh / 2);
 }
 
 #centerPanel {
@@ -33,25 +35,40 @@ form {
 }
 
 #MemberDeck, #ChatDeck {
-    height: 40%;
+    min-height: 40%;
+    height: calc(94vh * 0.4);
 }
 
 #UrlOptionsDeck {
-    height: 20%;
+    height: calc(94vh * 0.2);
 }
 
 .panel {
     border-radius: 30px;
 }
 
-.utub-row {
-    height: 40vh;
+.utubs-row {
+    min-height: 50%;
     overflow-y: auto;
+    margin: 4px;
 }
 
+.members-row {
+    min-height: 20vh;
+    overflow-y: auto;
+    margin: 4px;
+}
+
+.url-info {
+    min-height: auto;
+}
 
 .utub-names-radios {
     padding-bottom: 5px;
+}
+
+.utub-buttons {
+    min-height: max-content;
 }
 
 .form-check-label {

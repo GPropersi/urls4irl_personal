@@ -35,7 +35,7 @@ form {
 }
 
 #MemberDeck, #ChatDeck {
-    min-height: 40%;
+    min-height: calc(94vh * 0.4);
     height: calc(94vh * 0.4);
 }
 
@@ -54,7 +54,7 @@ form {
 }
 
 .members-row {
-    min-height: 20vh;
+    min-height: 50%;
     overflow-y: auto;
     margin: 4px;
 }
@@ -67,7 +67,7 @@ form {
     padding-bottom: 5px;
 }
 
-.utub-buttons {
+.utub-buttons, .member-buttons {
     min-height: max-content;
 }
 
@@ -79,6 +79,13 @@ form {
 .url-card {
     padding: 2px;
     margin: 1px;
+}
+
+.member-card-body {
+    padding-left: 1.25rem;
+    padding-top: 1.25rem;
+    padding-bottom: 0;
+    padding-right: 0;
 }
 
 .url-card-body {

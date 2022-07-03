@@ -319,7 +319,7 @@ function displayMembers(utubMembers, currentUser, creator) {
         };
 
         let memberCard = $('<div></div>').addClass('card member-card');
-        let memberCardBody = $('<div></div>').addClass('card-body');
+        let memberCardBody = $('<div></div>').addClass('card-body member-card-body');
         let memberCardBodyRow = $('<div></div>').addClass('row justify-content-center');
 
         let cardText = member.username;

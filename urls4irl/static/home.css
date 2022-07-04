@@ -1,6 +1,5 @@
 html {
-    height: 100%;
-    overflow-y: hidden;
+    height: 100vh;
 }
 
 p {
@@ -21,53 +20,50 @@ form {
 }
 
 .main-content, .row-main-content {
-    height: 94vh;
+    height: 91vh;
     z-index: -1;
 }
 
-#UTubDeck, #TagDeck {
-    min-height: calc(94vh / 2);
-    height: calc(94vh / 2);
-}
-
-#centerPanel {
+#leftPanel, #centerPanel, #rightPanel {
     height: 100%;
 }
 
-#MemberDeck, #ChatDeck {
-    min-height: calc(94vh * 0.4);
-    height: calc(94vh * 0.4);
+#UTubDeck, #TagDeck {
+    height: 50%;
 }
 
 #UrlOptionsDeck {
-    height: calc(94vh * 0.2);
+    height: 20%;
+}
+
+#MemberDeck, #ChatDeck {
+    height: 40%;
 }
 
 .panel {
     border-radius: 30px;
 }
 
-.utubs-row {
-    min-height: 50%;
+.utubs-row, .members-row, .tags-row {
+    min-height: 20%;
+    overflow-y: auto;
+}
+
+.url-info-row, .chat-window {
+    min-height: 20%;
     overflow-y: auto;
     margin: 4px;
 }
 
 .members-row {
-    min-height: 50%;
-    overflow-y: auto;
-    margin: 4px;
-}
-
-.url-info {
-    min-height: auto;
+    margin-bottom: 5px;
 }
 
 .utub-names-radios {
     padding-bottom: 5px;
 }
 
-.utub-buttons, .member-buttons {
+.utub-buttons, .member-buttons, .url-buttons {
     min-height: max-content;
 }
 
@@ -81,11 +77,14 @@ form {
     margin: 1px;
 }
 
+.member-card {
+    padding: 2px;
+    margin: 1px;
+}
+
 .member-card-body {
-    padding-left: 1.25rem;
-    padding-top: 1.25rem;
-    padding-bottom: 0;
-    padding-right: 0;
+    padding-top: 0px;
+    padding-bottom: 0px;
 }
 
 .url-card-body {

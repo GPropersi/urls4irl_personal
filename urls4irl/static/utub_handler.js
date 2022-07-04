@@ -36,7 +36,7 @@ $(document).ready(function() {
         const tagToRemove = $(this).parent().parent();
         const tagData = tagToRemove.attr('id');
         removeTag(tagToRemove, tagData);
-    })
+    });
 
     // Add a URL on button click
     $('.add-url').click(function() {
@@ -60,6 +60,7 @@ $(document).ready(function() {
         if (!jQuery.isEmptyObject(selected)) {
             let utubId = selected[0].id.replace('utub', '');
             getURLInfo(utubId, urlID);
+            getURLInfoUnderURL()
         };
     });
 
@@ -97,15 +98,11 @@ $(document).ready(function() {
 
         let removeUserButton = $('.remove-user');
         if (selectedUserId != currentUser || selectedUserId != creator) {
-            removeUserButton.removeClass('disabled').attr('user', selectedUserId)
+            removeUserButton.removeClass('disabled').attr('user', selectedUserId);
         } else {
             removeUserButton.addClass('disabled').removeAttr('user');
         };
-
-        console.log(selectedUser)
-        console.log($('[creator]'))
-
-    })
+    });
 
     // Remove UTub on click
     $(document).on('click', '.delete-utub', function () {
@@ -115,7 +112,7 @@ $(document).ready(function() {
         if (!jQuery.isEmptyObject(selected)) {
             let utubId = selected[0].id.replace('utub', '');
             deleteUtub(utubId);
-        }
+        };
     });
 
     var csrftoken = $('meta[name=csrf-token]').attr('content')
@@ -185,7 +182,7 @@ function userHasUtubs(hasUTubs){
         const noUtubLabel = $('<h4></h4>').addClass('no-utubs');
         noUtubLabel.text('No UTubs found.');
         noUtubLabel.insertBefore($('.create-utub'));
-        $('.utub-title').text('No UTubs found.')
+        $('.utub-title').text('No UTubs found.');
         $('.members-holder').empty();
         $('.tags-for-utub').empty();
     }
@@ -193,7 +190,7 @@ function userHasUtubs(hasUTubs){
 
 /**
  * @function displayUtubData
- * Parses and displays the received JSON data this user's selected UTub
+ * Parses and displays the received JSON data for this user's selected UTub
  * @param {JSON} utubData JSON data containing all UTub information for this user
  */
 function displayUtubData(utubData) {
@@ -204,6 +201,8 @@ function displayUtubData(utubData) {
     let tags = utubData.tags;
     let members = utubData.members;
     let currentUser = $('.c-user').attr('id');
+
+    // Clear out elements in preparation for showing the UTub's data
     $('.no-urls').remove();
     $('.utub-description').remove();
     $('.url-card').remove();
@@ -223,7 +222,7 @@ function displayUtubData(utubData) {
 
     const urlCards = $('.url-card');
     const displayedUrlCards = urlCards.map(found => urlCards[found].id);
-    const displayedUrlCardsIDs = Object.values(displayedUrlCards)
+    const displayedUrlCardsIDs = Object.values(displayedUrlCards);
 
     if (urls.length !== 0) {
         $('.no-urls').remove();
@@ -320,37 +319,29 @@ function displayMembers(utubMembers, currentUser, creator) {
 
         let memberCard = $('<div></div>').addClass('card member-card');
         let memberCardBody = $('<div></div>').addClass('card-body member-card-body');
-        let memberCardBodyRow = $('<div></div>').addClass('row justify-content-center');
 
         let cardText = member.username;
-        memberCard.attr("username", member.username);
+        memberCard.attr({'username': member.username});
 
         if (creator === member.id) {
             cardText = cardText + " (Creator)";
             memberCard.attr("creator", true);
         };
 
-        let memberUsername = $('<div></div>').addClass('col-12')
-        memberUsername.text(cardText)
-        memberCardBodyRow.append(memberUsername)
+        memberCardBody.text(cardText);
         memberCard.append(memberCardBody);
-        memberCardBody.append(memberCardBodyRow)
-
-        memberCard.attr({
-            'id': 'user' + member.id
-        });
+        memberCard.attr({'id': 'user' + member.id});
         
         memberDeck.append(memberCard);
-        memberCard.css("height", "4rem");
     };
 
-    let removeUserButton = $('<a></a>').addClass("btn btn-warning btn py-0 remove-user col-4 offset-1").attr({
+    let removeUserButton = $('<a></a>').addClass("btn btn-warning btn py-0 px-0 remove-user col-4 offset-1").attr({
         'href': '#',
     });
 
     if (currentUser == creator) {
         $('.add-user').remove();
-        let addUserButton = $('<a></a>').addClass("btn btn-primary py-0 px-5 add-user col-7").attr({
+        let addUserButton = $('<a></a>').addClass("btn btn-primary py-0 add-user col-7").attr({
             'href': '#'
         });
         addUserButton.text("Add a User!");
@@ -375,7 +366,7 @@ function removeMemberFromUtub(userID, utubID) {
     let removeData = {
         "UTubID": utubID,
         "UserID": userID
-    }
+    };
 
     let request = $.ajax({
         url: "/delete_user",
@@ -383,7 +374,7 @@ function removeMemberFromUtub(userID, utubID) {
         type: 'POST',
         dataType: 'json',
         data: JSON.stringify(removeData),
-    })
+    });
 
     request.done(function(xml, textStatus, xhr) {
         if (xhr.status == 200) {
@@ -431,7 +422,7 @@ function addMemberToUtub(utubID) {
             request.done(function(addUserSuccess, textStatus, xhr) {
                 if (xhr.status == 200) {
                     $('#Modal').modal('hide');
-                    getUtubInfo(addUserSuccess.utubID)
+                    getUtubInfo(addUserSuccess.utubID);
                 }; 
             });
         
@@ -443,19 +434,11 @@ function addMemberToUtub(utubID) {
                     let flashElem = flashMessageBanner(flashMessage, flashCategory)
                     flashElem.insertBefore('#modal-body').show();
                 } else if (xhr.status == 404) {
-                    $('.invalid-feedback').remove();
-                    $('.alert').remove();
-                    $('.form-control').removeClass('is-invalid');
-                    const error = JSON.parse(xhr.responseJSON);
-                    for (var key in error) {
-                        $('<div class="invalid-feedback"><span>' + error[key] + '</span></div>' )
-                        .insertAfter('#' + key).show();
-                        $('#' + key).addClass('is-invalid');
-                    };
+                    ModalFormErrorGenerator(xhr.responseJSON);
                 }; 
                 console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
                 console.log("Error: " + error);
-            })
+            });
         });
     });
 
@@ -466,13 +449,13 @@ function addMemberToUtub(utubID) {
             const flashCategory = xhr.responseJSON.category;
 
             globalFlashBanner(flashMessage, flashCategory);
-        }
-    })
+        };
+    });
 };
 
 /**
  * @function displayTags
- * Displays the tags for the selected UTub
+ * Displays the tags for the selected UTub, as a list of check boxes.
  * @param {Array} utubTags - The tags for this UTub, stored in a string
  */
 function displayTags(utubTags) {
@@ -489,7 +472,7 @@ function displayTags(utubTags) {
             let tagLabel = $('<label></label>').addClass('form-check-label').attr({
                 'for': tagName,
             });
-            tagLabel.html(tagName);
+            tagLabel.text(tagName);
 
             let tagCheckbox = $('<input>').addClass('form-check-input').attr({
                 'type': 'checkbox',
@@ -510,11 +493,13 @@ function displayTags(utubTags) {
 
 /**
  * @function putUtubNames
- * Puts down the UTub names this user is a part of, as part of a selection of radio buttons
+ * Displays the UTub names this user is a part of, as part of a selection of radio buttons.
  * Saves the first UTub's id to return later as part of a post request to display the first 
- * UTub's data
+ * UTub's data.
+ * Selects the first radio button, where there is one radio button for each UTub this user
+ * is a member of.
  * @param {Array} utubNames - Array of UTub contained originally from a JSON
- * @returns {String}
+ * @returns {String} - The UTub ID for the first UTub in the newly created set of radio buttons
  */
 function putUtubNames(utubNames) {
     let firstUtubId = null;
@@ -535,8 +520,7 @@ function putUtubNames(utubNames) {
             utubRadio.prop('checked', true);
             firstUtubId = utub_id;
         };
-        
-
+    
         let utubLabel = $('<label></label>');
         utubLabel.addClass('form-check-label');
         utubLabel.attr({'for': 'utub' + utub_id});
@@ -554,7 +538,8 @@ function putUtubNames(utubNames) {
 
 /**
  * @function createUtub
- * Sends a post request to create a UTub with the given information, via a modal
+ * Sends an AJAX post request to create a UTub with the given information, through a
+ * popped up modal form.
  */
 function createUtub() {
     $.get("/create_utub", function (formHtml) {
@@ -562,7 +547,7 @@ function createUtub() {
         $('#Modal').modal();
         $('#submit').click(function (event) {
             event.preventDefault();
-            // $('.modal-flasher').prop({'hidden': true});
+    
             let request = $.ajax({
                 url: "/create_utub",
                 type: "POST",
@@ -574,7 +559,6 @@ function createUtub() {
                     $('#Modal').modal('hide');
                     globalFlashBanner(response.message, response.category);
 
-                    
                     let utubRadio = $('<input>');
                     utubRadio.addClass('form-check-input');
                     utubRadio.attr({
@@ -607,15 +591,7 @@ function createUtub() {
                     let flashElem = flashMessageBanner(flashMessage, flashCategory);
                     flashElem.insertBefore('#modal-body').show();
                 } else if (xhr.status == 404) {
-                    $('.invalid-feedback').remove();
-                    $('.alert').remove();
-                    $('.form-control').removeClass('is-invalid');
-                    const error = JSON.parse(xhr.responseJSON);
-                    for (var key in error) {
-                        $('<div class="invalid-feedback"><span>' + error[key] + '</span></div>' )
-                        .insertAfter('#' + key).show();
-                        $('#' + key).addClass('is-invalid');
-                    };
+                    ModalFormErrorGenerator(xhr.responseJSON);
                 };
                 console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
                 console.log("Error: " + error);
@@ -626,6 +602,8 @@ function createUtub() {
 
 /**
  * @function deleteUtub
+ * Performs an AJAX request to delete the selected UTub.
+ * Can only be performed by the creator of the UTub.
  * @param {string} utubID - The ID of the UTub to delete
  */
 function deleteUtub(utubID) {
@@ -655,35 +633,38 @@ function deleteUtub(utubID) {
 
             const firstUtub = utubSelections[0].id.replace('utub', '');
 
+            // Update the selectable UTubs
             if (utubID == firstUtub) {
                 utubSelections[1].checked = true;
                 const secondUtub = utubSelections[1].id.replace('utub', '');
-                selected.parent().remove()
+                selected.parent().remove();
                 getUtubInfo(secondUtub);
             } else {
                 const selectedID = selected[0].id;
                 const toRemove = $('#' + selectedID);
-                toRemove.parent().remove()
+                toRemove.parent().remove();
                 getUtubInfo(firstUtub);
                 utubSelections[0].checked = true;
             };
-    
         };
     });
 
     request.fail(function(xhr, textStatus, error) {
         if (xhr.status === 403) {
-            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category)
+            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category);
         } else {
             console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
             console.log("Error: " + error);
         };
     });
-}
+};
 
 /**
  * @function addUrlToUtub
- * Adds a URL to a UTub via AJAX request
+ * Adds a URL to a UTub via AJAX request.
+ * Pops up a modal to allow the user to type in the URL they wish to add.
+ * If the URL does not send back a valid HTTP code, or the URL is invalid,
+ * an error message will pop up.
  * @param {string} utubID - The ID for the UTub to generate a URL for
  */
 function addUrlToUtub(utubID) {
@@ -692,7 +673,7 @@ function addUrlToUtub(utubID) {
         $('#Modal').modal();
         $('#submit').click(function (event) {
             event.preventDefault();
-            // $('.modal-flasher').prop({'hidden': true});
+
             $('.invalid-feedback').remove();
             $('.alert').remove();
             $('.form-control').removeClass('is-invalid');
@@ -705,7 +686,7 @@ function addUrlToUtub(utubID) {
             request.done(function(addUrlSuccess, textStatus, xhr) {
                 if (xhr.status == 200) {
                     $('#Modal').modal('hide');
-                    getUtubInfo(addUrlSuccess.utubID)
+                    getUtubInfo(addUrlSuccess.utubID);
                 }; 
             });
         
@@ -714,22 +695,14 @@ function addUrlToUtub(utubID) {
                     const flashMessage = xhr.responseJSON.error;
                     const flashCategory = xhr.responseJSON.category;
 
-                    let flashElem = flashMessageBanner(flashMessage, flashCategory)
+                    let flashElem = flashMessageBanner(flashMessage, flashCategory);
                     flashElem.insertBefore('#modal-body').show();
                 } else if (xhr.status == 404) {
-                    $('.invalid-feedback').remove();
-                    $('.alert').remove();
-                    $('.form-control').removeClass('is-invalid');
-                    const error = JSON.parse(xhr.responseJSON);
-                    for (var key in error) {
-                        $('<div class="invalid-feedback"><span>' + error[key] + '</span></div>' )
-                        .insertAfter('#' + key).show();
-                        $('#' + key).addClass('is-invalid');
-                    };
+                    ModalFormErrorGenerator(xhr.responseJSON);
                 }; 
                 console.log("Failure. Status code: " + response.status + ". Status: " + textStatus);
                 console.log("Error: " + error);
-            })
+            });
         });
     });
 
@@ -746,7 +719,8 @@ function addUrlToUtub(utubID) {
 
 /**
  * @function deleteUTubURL
- * Sends a JSON as a POST request to delete the signified URL from the given UTub
+ * Sends a JSON as a POST request to delete the selected URL from the given UTub.
+ * Removes the URL HTML element from display
  * @param {string} urlToDel - A string containing the UTub ID and URL ID, split by '-'
  */
 function deleteUTubURL(urlToDel) {
@@ -773,7 +747,7 @@ function deleteUTubURL(urlToDel) {
             // Flash success on delete of URL
             globalFlashBanner(response.message, response.category);
 
-            // Remove URL card
+            // Remove URL cards, check if no URLs remain
             const urlCards = $('.url-card');
             if (urlCards.length === 0) {
                 const utubHolder= $(".utub-holder");
@@ -781,6 +755,7 @@ function deleteUTubURL(urlToDel) {
                 utubHolder.append(noURLs);
             };
 
+            // Update URL Info deck to indicate no URL is selected
             let noUrlSelected = $("<p></p>").addClass("url-description").text("Add/Select a URL!");
             $('#UrlOptionsHolder').empty().append(noUrlSelected);
         };
@@ -788,7 +763,7 @@ function deleteUTubURL(urlToDel) {
 
     request.fail(function(xhr, textStatus, error) {
         if (xhr.status == 403) {
-            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category)
+            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category);
         } else {
             console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
             console.log("Error: " + error);
@@ -796,6 +771,13 @@ function deleteUTubURL(urlToDel) {
     });
 };
 
+/**
+ * @function getURLInfo
+ * Performs an AJAX call to the server requesting URL info for the 
+ * requested URL.
+ * @param {string} utubID - The ID of the UTub containing the URL
+ * @param {string} urlID - The ID of the URL of interest
+ */
 function getURLInfo(utubID, urlID) {
     let request = $.getJSON({
         'url': '/get_url_info/' + utubID + '-' + urlID,
@@ -803,20 +785,34 @@ function getURLInfo(utubID, urlID) {
 
     request.done(function(url_info, textStatus, xhr) {
         if (xhr.status == 200) {
-            showURLInfo(url_info)
+            showURLInfo(url_info);
         };
     });
 
     request.fail(function(xhr, textStatus, error){
         if (xhr.status == 403) {
-            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category)
+            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category);
         } else {
             console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
             console.log("Error: " + error);
         };
-    })
+    });
 };
 
+/**
+ * @function showURLInfo
+ * Given the URL info in Object format, shows the relevant URL description
+ * and whomever added it. Creates and displays an Add Tag button for adding
+ * tags to the URL. If the current user added the URL, or current user is
+ * the creator of the UTub, then also adds a "Delete URL" button to delete
+ * the URL from the UTub.
+ * @param {Object} urlInfo - Contains:
+ *      "urlAddedBy" -> A string containing username of whomever created it
+ *      "urlDesc" -> A string for the description of the URL
+ *      "utubID" -> The ID of the UTub currently in
+ *      "urlID" -> The ID of the URL currently looking at
+ *      "canRemove" -> A boolean depicting whether user has permission to delete
+ */
 function showURLInfo(urlInfo) {
     $(".url-info").empty();
     $(".url-buttons").empty();
@@ -832,7 +828,7 @@ function showURLInfo(urlInfo) {
     };
     $(".url-info").append(urlDescription);
 
-    let addTag = $('<a></a>').addClass("btn btn-primary btn-sm py-0 px-5 add-tag").attr({
+    let addTag = $('<a></a>').addClass("btn btn-primary btn-sm py-0 add-tag col-12").attr({
         'href': '#',
         'id': urlInfo.utubID + '-' + urlInfo.urlID
     });
@@ -840,15 +836,25 @@ function showURLInfo(urlInfo) {
     $(".url-buttons").append(addTag);
 
     if (urlInfo.canRemove) {
-        let deleteUrl = $('<a></a>').addClass("btn btn-warning btn-sm py-0 del-link").attr({
+        let deleteUrl = $('<a></a>').addClass("btn btn-warning btn-sm py-0 del-link col-4 offset-1").attr({
             'href': '#',
             'id': urlInfo.utubID + '-' + urlInfo.urlID
         });
         deleteUrl.text('Remove URL');
+        addTag.removeClass('col-12').addClass('col-7');
         $(".url-buttons").append(deleteUrl);
+
     };
 };
 
+/**
+ * @function addTag
+ * Performs an AJAX request to add a tag to the selected URL in the selected UTub.
+ * URLs in a given UTub can only have 5 tags each.
+ * Pops up a modal for the user to type in the tag they wish to add to the URL.
+ * @param {string} utubID - The ID of the currently selected UTub
+ * @param {string} urlID - The ID of the URL to add a tag to
+ */
 function addTag(utubID, urlID){
     let addTagRequest = $.get("/add_tag/" + utubID + "/" + urlID, function (formHtml) {
         $('#Modal .modal-content').html(formHtml);
@@ -868,12 +874,13 @@ function addTag(utubID, urlID){
                 if (xhr.status == 200) {
                     $('#Modal').modal('hide');
 
+                    // Refresh UTub info and then reselect the URL user had previously chosen
                     getUtubInfo(addTagSuccess.utubID)
                         .then(function(result) {
                             $("#url" + urlID).css('background', 'silver');
                         });
                     
-                    globalFlashBanner(addTagSuccess.message, addTagSuccess.category)
+                    globalFlashBanner(addTagSuccess.message, addTagSuccess.category);
                 }; 
             });
         
@@ -882,32 +889,30 @@ function addTag(utubID, urlID){
                     const flashMessage = xhr.responseJSON.error;
                     const flashCategory = xhr.responseJSON.category;
 
-                    let flashElem = flashMessageBanner(flashMessage, flashCategory)
+                    let flashElem = flashMessageBanner(flashMessage, flashCategory);
                     flashElem.insertBefore('#modal-body').show();
                 } else if (xhr.status == 404) {
-                    $('.invalid-feedback').remove();
-                    $('.alert').remove();
-                    $('.form-control').removeClass('is-invalid');
-                    const error = JSON.parse(xhr.responseJSON);
-                    for (var key in error) {
-                        $('<div class="invalid-feedback"><span>' + error[key] + '</span></div>' )
-                        .insertAfter('#' + key).show();
-                        $('#' + key).addClass('is-invalid');
-                    };
+                    ModalFormErrorGenerator(xhr.responseJSON);
                 }; 
                 console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
                 console.log("Error: " + error);
-            })
+            });
         });
     });
 
     addTagRequest.fail(function(xhr, textStatus, error) {
         if (xhr.status == 403) {
-            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category)
+            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category);
         };
     });
-}
+};
 
+/**
+ * @function removeTag
+ * Performs an AJAX requst with the given tag data to remove it from given URL.
+ * @param {Object} tagElem - The HTML element of the tag selected to remove
+ * @param {string} tagData - String containing the UTubID, UrlID, and TagID separeated by a '-'.
+ */
 function removeTag(tagElem, tagData) {
     const rawTagData = tagData.split('-');
     let tagDataForDelete = new Object;
@@ -921,7 +926,7 @@ function removeTag(tagElem, tagData) {
         type: 'POST',
         dataType: 'json',
         data: JSON.stringify(tagDataForDelete),
-    })
+    });
 
     request.done(function(response, textStatus, xhr) {
         if (xhr.status == 200) {
@@ -934,8 +939,9 @@ function removeTag(tagElem, tagData) {
             if ($(".tag-choice").length != 0) {
                 let tagsForUtub = $(".tag-badge");
                 let tagChoicesForUtub = $(".tag-choice");
-                checkIfTagChoiceRemoved(tagsForUtub, tagChoicesForUtub)
-            }
+                // Check if any updates need to be made to the tags displayed in TagDeck
+                checkIfTagChoiceRemoved(tagsForUtub, tagChoicesForUtub);
+            };
         };
     });
 
@@ -947,9 +953,18 @@ function removeTag(tagElem, tagData) {
             console.log("Error: " + error);
         };
     });
+};
 
-}
-
+/**
+ * @function checkIfTagChoiceRemoved
+ * Reads in the all unique tag HTML elements under each URL for the selected UTub.
+ * If no tags remain, updates the TagDeck to indicate no tags are left.
+ * If a tag is deleted and no other URLs have that tag, but other tags still remain,
+ * then updates the TagDeck with the tags that remain.
+ * @param {Array} tagsInUtub - Current tags under each URL in the UTub
+ * @param {Array} tagChoices - The tags left to choose from in the TagDeck
+ * @returns 
+ */
 function checkIfTagChoiceRemoved(tagsInUtub, tagChoices) {
     if (tagsInUtub.length === 0) {
         $(".tags-for-utub").empty();
@@ -957,20 +972,29 @@ function checkIfTagChoiceRemoved(tagsInUtub, tagChoices) {
         $(".tags-for-utub").append(noTags);
         return
     }
+
     let tagIDsInUtub = new Array;
     for (let tag of tagsInUtub) {
         tagIDsInUtub.push($(tag).attr('tag'));
     };
 
-    // Remove the filterable choice if no longer present on any URLs on the UTub
+    // Remove the tag from display if no longer present on any URLs on the UTub
     for (let tagChoice of tagChoices) {
-        const tagChoiceID = $(tagChoice).attr('tag-choice')
+        const tagChoiceID = $(tagChoice).attr('tag-choice');
         if (!tagIDsInUtub.includes(tagChoiceID)) {
-            $(tagChoice).remove()
-        }
-    }
-}
+            $(tagChoice).remove();
+        };
+    };
+};
 
+/**
+ * @function tagElemBuilder
+ * Generates a tag element with the given tag details, and returns it.
+ * @param {*} tagDetails - Contains:
+ *      "id" -> THe ID of the tag
+ *      "tag_string" -> A string of the tag itself
+ * @returns - A tag HTML element.
+ */
 function tagElemBuilder(tagDetails){
     const tagElem = $('<span></span>').addClass('badge badge-pill badge-light tag-badge');
     const tagID = tagDetails.id;
@@ -978,10 +1002,28 @@ function tagElemBuilder(tagDetails){
     const tagNameElem = $('<span></span>').text(tag);
     const closeButtonOuter = $('<span></span>').prop('aria-hidden', false).attr('id', 'tag' + tagID);
     const closeButtonInner = $('<a></a>').addClass('btn btn-sm btn-outline-link border-0 tag-del').html('&times;').prop('href', '#');
-    closeButtonOuter.append(closeButtonInner)
+    closeButtonOuter.append(closeButtonInner);
     tagElem.append(tagNameElem);
     tagElem.append(closeButtonOuter);
-    return tagElem
+    return tagElem;
+};
+
+/**
+ * @function ModalFormErrorGenerator
+ * Parses and generates the relevant Modal Form errors contained, provided
+ * when an AJAX request is sent to the server and returns with errors.
+ * @param {Object} modalFormErrors - The inputs to add errors to
+ */
+function ModalFormErrorGenerator(modalFormErrors){
+    $('.invalid-feedback').remove();
+    $('.alert').remove();
+    $('.form-control').removeClass('is-invalid');
+    const error = JSON.parse(modalFormErrors);
+    for (var key in error) {
+        $('<div class="invalid-feedback"><span>' + error[key] + '</span></div>' )
+        .insertAfter('#' + key).show();
+        $('#' + key).addClass('is-invalid');
+    };
 }
 
 /**
@@ -1022,6 +1064,13 @@ function flashMessageBanner(message, category) {
     return flashElem;
 };
 
+/**
+ * @function globalFlashBanner
+ * Uses flashMessageBanner to display a flash message at the top of the window for the
+ * whole webpage.
+ * @param {string} flashMessage - The message to display 
+ * @param {string} flashCategory - The relevant bootstrap 4 category for flash messages
+ */
 function globalFlashBanner(flashMessage, flashCategory) {
     const flashElem = flashMessageBanner(flashMessage, flashCategory);
     $(flashElem).css({

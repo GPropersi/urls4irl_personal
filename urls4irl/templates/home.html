@@ -12,14 +12,14 @@
 
         <!-- Left Side Panel -->
 
-        <div class="col-md-2 order-2 order-md-1 left-side-panel">
+        <div id="leftPanel" class="col-md-2 order-2 order-md-1 left-side-panel">
             <!-- Will be creation date ordered by default, but repositionable (preferenced order saved and stored with user) -->
             <div id="UTubDeck" class="col-12 col-lg-12 panel p-3 d-flex flex-column">
                 <div>
                     <h2>UTubs</h2>
                 </div>
                 <div class="row utubs-row">
-                    <div class="div col-12 col-lg-12">
+                    <div class="div col-12 col-lg-12 utub-names-holder">
                         <div class="form-check utub-names-ids">
                             <!-- UTUB NAMES, IDS, RATIO BUTTONS HERE -->
                         </div>
@@ -32,11 +32,16 @@
                 </div>    
             </div>
             <!-- Will be alpha ordered -->
-            <div id="TagDeck" class="col-12 col-lg-12 panel py-3">
+            <div id="TagDeck" class="col-12 col-lg-12 panel py-3 d-flex flex-column">
                 <h2>Tags</h2>
-                <form class="tags-for-utub">
-                    <!-- UTUB TAGS -->
-                </form>
+                <div class="row tags-row">
+                    <div class="div col-12 col-lg-12 tag-names-holder">
+                        <form class="tags-for-utub">
+                            <!-- UTUB TAGS -->
+                        </form>
+                    </div>
+                </div>
+                
             </div>
         </div>
 
@@ -68,6 +73,7 @@
         <!-- Right Side Panel -->
 
         <div id="rightPanel" class="col-md-3 order-3 order-md-3 panel">
+            <!-- MEMBER PANEL -->
             <div id="MemberDeck" class="col-12 col-lg-12 p-3 panel d-flex flex-column">
                 <h2>Members</h2>
                 <div class="row members-row"> 
@@ -83,35 +89,35 @@
             </div>
             
                 
-                <!-- <button>Access URL</button> -->
-            <div id="UrlOptionsDeck" class="col-12 col-lg-12 p-3 panel">
+            <!-- URL INFO PANEL -->
+            <div id="UrlOptionsDeck" class="col-12 col-lg-12 p-3 panel d-flex flex-column">
                 <h2>URL Info</h2>
-                <div id="UrlOptionsHolder" class="col-12 col-lg-12 d-flex flex-column">
-                    <div class="row">
-                        <div class="col-12 col-lg-12 url-info">
-                            <!-- URL INFORMATION HERE -->
-                        </div>
+                <div class="row url-info-row">
+                    <div class="col-12 col-lg-12 url-info">
+                        <!-- URL INFORMATION HERE -->
                     </div>
-                    <div class="row mt-auto">
-                        <div class="col-12 col-lg-12 url-buttons">
-                            <!-- URL BUTTONS HERE -->
-                        </div>
-                    </div>    
                 </div>
+                <div class="row mt-auto">
+                    <div class="col-12 col-lg-12 url-buttons">
+                        <!-- URL BUTTONS HERE -->
+                    </div>
+                </div>    
             </div>
 
-            <div id="ChatDeck" class="col-12 col-lg-12 p-3 panel">
+            <div id="ChatDeck" class="col-12 col-lg-12 p-3 panel d-flex flex-column">
                 <h2>Chat</h2>
-                <p class="lead">
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque, iste molestiae
-                    beatae, maiores deserunt
-                    in voluptatibus
-                    aspernatur architecto excepturi delectus soluta? Ipsa, deleniti dolorem hic consequatur
-                    repellat eveniet quidem
-                    voluptate necessitatibus dolorum delectus minus vitae, ut, veritatis sint ipsum magnam
-                    autem nam ex deserunt debitis
-                    eaque ratione! Nobis, quidem assumenda.
-                </p>
+                <div class="row chat-window">
+                    <p class="lead">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque, iste molestiae
+                        beatae, maiores deserunt
+                        in voluptatibus
+                        aspernatur architecto excepturi delectus soluta? Ipsa, deleniti dolorem hic consequatur
+                        repellat eveniet quidem
+                        voluptate necessitatibus dolorum delectus minus vitae, ut, veritatis sint ipsum magnam
+                        autem nam ex deserunt debitis
+                        eaque ratione! Nobis, quidem assumenda.
+                    </p>
+                </div>
             </div>
         </div>
 

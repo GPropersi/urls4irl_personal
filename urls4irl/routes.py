@@ -559,32 +559,6 @@ def add_url(utub_id: int):
     else:
         url_errors = json.dumps(utub_new_url_form.errors, ensure_ascii=False)
         return jsonify(url_errors), 404
-
-@app.route('/get_url_info/<int:utub_id>-<int:url_id>', methods=["GET"])
-@login_required
-def get_url_info(utub_id: int, url_id: int):
-    url_info_for_url_in_utub = Utub_Urls.query.filter_by(utub_id=utub_id, url_id=url_id).first_or_404()
-    users_in_utub = Utub.query.filter_by(id=utub_id).first().members
-
-    if not int(current_user.get_id()) in [int(user.user_id) for user in users_in_utub]:
-        # Not a member of this UTub
-        get_url_info_error = {
-            'error': 'Not able to process this request.',
-            'category': 'danger'
-        }
-        return jsonify(get_url_info_error), 403
-
-    url_info = {
-        'urlString': url_info_for_url_in_utub.url_in_utub.url_string,
-        'urlAddedBy': url_info_for_url_in_utub.user_that_added_url.username,
-        'urlAddedAt': url_info_for_url_in_utub.added_at,
-        'urlID': url_info_for_url_in_utub.url_id,
-        'urlDesc': url_info_for_url_in_utub.url_notes,
-        'utub': url_info_for_url_in_utub.utub.name,
-        'utubID': url_info_for_url_in_utub.utub_id,
-        'canRemove': int(current_user.get_id()) == int(url_info_for_url_in_utub.user_that_added_url.id)
-    }
-    return jsonify(url_info), 200
      
 """#####################        END URL INVOLVED ROUTES        ###################"""
 

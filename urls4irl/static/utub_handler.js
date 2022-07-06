@@ -51,17 +51,12 @@ $(document).ready(function() {
 
     // On URL card selection show URL info
     $(document).on('click', '.url-card', function() {
+        $(".url-card-desc").hide();
+        $(".url-card-buttons").hide();
         $('.url-card').css('background', 'none');
-        const urlID = $(this).attr('id').replace('url','');
         $(this).css('background', 'silver');
-        let utubSelections = $('.utub-names-radios :radio');
-        let selected = utubSelections.filter(found => utubSelections[found].checked);
-
-        if (!jQuery.isEmptyObject(selected)) {
-            let utubId = selected[0].id.replace('utub', '');
-            getURLInfo(utubId, urlID);
-            getURLInfoUnderURL()
-        };
+        $(this).find(".url-card-desc").show();
+        $(this).find(".url-card-buttons").show();
     });
 
     // Add a member on button click
@@ -115,6 +110,11 @@ $(document).ready(function() {
         };
     });
 
+    // To deselect the selected URL or member card by clicking elsewhere on the screen
+    $(document.body).click(function() {
+        deselectMemberAndUrl();
+    });
+
     var csrftoken = $('meta[name=csrf-token]').attr('content')
     $.ajaxSetup({
         beforeSend: function(xhr, settings) {
@@ -125,6 +125,8 @@ $(document).ready(function() {
     });
 });
 
+
+
 /**
  * @function loadUtubData
  * Loads the UTub names and IDs for the currently logged in user, occurs on first log in
@@ -133,8 +135,8 @@ $(document).ready(function() {
 function loadUtubData(userUtubs) {
     if (userUtubs.length === 0) {
         userHasUtubs(false);
-        return
-    }
+        return;
+    };
 
     let utubNames = [];
     for (let utub of userUtubs) {
@@ -248,28 +250,42 @@ function displayUtubData(utubData) {
             urlLink.html(urlName);
 
             innerUrlCard.append(urlLink);
-            innerUrlCard.append($("<br>"))
+            innerUrlCard.append($("<br>"));
+
+            const urlAdder = members.find(member => member.id === url.added_by);
+            const urlDesc = url.notes;
+
+            // Add div before tag div for label of whomever added this URL and description of URL
+            const descDiv = urlDescriptionElemBuilder(urlDesc, urlAdder.username)
             
+            innerUrlCard.append(descDiv);
+
+            const tagDiv = $('<div></div>').addClass('card-text tag-span');
+            tagDiv.attr({
+                'urltagspan': url.url_id
+            });
+            innerUrlCard.append(tagDiv);
+
             // Check if url has tags, and if so, append the elements
             if (urlTags.length !== 0) {
-                const tagSpan = $('<span></span>').addClass('card-text tag-span');
-                innerUrlCard.append(tagSpan);
                 let tagCounter = 0;
 
                 for (let urlTagID of urlTags) {
                     const tagToAdd = tags.find(element => element.id === urlTagID);
-                    let tagBadge = tagElemBuilder(tagToAdd);
+                    let tagBadge = tagElemBuilder(utubData.id, url.url_id, tagToAdd);
                     if (tagCounter === 0) {
                         tagBadge.css("margin-left", "0px");
                         tagCounter += 1;
                     };
-
-                    tagBadge.attr('id', utubData.id + "-" + url.url_id + "-" + urlTagID);
-                    tagBadge.attr('tag', urlTagID);
-                    tagSpan.append(tagBadge);
+                    tagDiv.append(tagBadge);
                 };
-                innerUrlCard.append('<br>');
             };
+
+            // Generate the div and place relevant buttons for adding a tag or removing this URL
+            const urlButtonsDiv = urlButtonsElemBuilder(utubData.id, url.url_id, currentUser, url.added_by, utubData.created_by);
+            innerUrlCard.append(urlButtonsDiv);
+            descDiv.hide();
+            urlButtonsDiv.hide();
 
             $(".utub-holder").append(urlCard);
         };
@@ -286,6 +302,95 @@ function displayUtubData(utubData) {
 
     displayTags(tags);
     displayMembers(members, currentUser, utubData.created_by);
+};
+
+/**
+ * @function urlDescriptionElemBuilder
+ * Receives the URL description and adder, and creates a div containing the
+ * adder of this URL and description of this URL to show.
+ * @param {string} urlDesc - The URL description for this UTub
+ * @param {string} urlAdder - The username of the user who added this URL to this UTub
+ * @returns - A div element containing the adder and description of the URL
+ */
+function urlDescriptionElemBuilder(urlDesc, urlAdder) {
+    const descDiv = $('<div></div>').addClass("card-body url-card-desc");
+    let addedBy = $('<p></p>').addClass("added-by").css('display', 'inline');
+    addedBy.text('Added by: ' + urlAdder);
+    
+    let urlDescription = $('<p></p>').addClass("url-description");
+
+    // Handle if the URL description is empty or not
+    if (urlDesc) {
+        urlDescription.text(urlDesc);
+    } else {
+        urlDescription.text("No description available.");
+    };
+
+    descDiv.append(addedBy);
+    descDiv.append(urlDescription);
+
+    return descDiv
+}
+
+/**
+ * @function tagElemBuilder
+ * Generates a tag badge with the given tag details, and returns it.
+ * @param {number} utubID - ID of this UTub
+ * @param {number} urlID - ID of this URL
+ * @param {Object} tagDetails - Contains:
+ *      "id" -> THe ID of the tag
+ *      "tag_string" -> A string of the tag itself
+ * @returns - A tag badge HTML element.
+ */
+ function tagElemBuilder(utubID, urlID, tagDetails){
+    const tagElem = $('<span></span>').addClass('badge badge-pill badge-light tag-badge');
+    const tagID = tagDetails.id;
+    const tag = tagDetails.tag_string;
+    const tagNameElem = $('<span></span>').text(tag);
+    const closeButtonOuter = $('<span></span>').prop('aria-hidden', false).attr('id', 'tag' + tagID);
+    const closeButtonInner = $('<a></a>').addClass('btn btn-sm btn-outline-link border-0 tag-del').html('&times;').prop('href', '#');
+    closeButtonOuter.append(closeButtonInner);
+    tagElem.append(tagNameElem);
+    tagElem.append(closeButtonOuter);
+
+    tagElem.attr({
+        'id': utubID + "-" + urlID + "-" + tagID,
+        'tag': tagID
+    });
+    
+    return tagElem;
+};
+
+/**
+ * @function urlButtonsElemBuilder
+ * Generates a button div to place within a URL card, containing Add Tag
+ * and remove URL buttons, if appropriate permissions had.
+ * @param {number} utubID - ID of this UTub
+ * @param {number} urlID - ID of this URL
+ * @param {string} currentUser - Current user ID
+ * @param {number} urlAdder - ID of user who added this URL to this UTub
+ * @param {number} utubCreator - ID of the creator of this UTub.
+ * @returns - A div containing the relevant buttons for this URL.
+ */
+ function urlButtonsElemBuilder(utubID, urlID, currentUser, urlAdder, utubCreator){
+    console.log(currentUser)
+    const urlButtonsDiv = $('<div></div>').addClass('card-body url-card-buttons col-6');
+    let addTag = $('<a></a>').addClass("btn btn-primary btn-sm py-0 add-tag col-4").attr({
+        'href': '#',
+        'id': utubID + '-' + urlID
+    });
+    addTag.text("Add Tag");
+    urlButtonsDiv.append(addTag);
+    
+    if (currentUser == urlAdder || currentUser == utubCreator) {
+        let deleteUrl = $('<a></a>').addClass("btn btn-warning btn-sm py-0 del-link col-4 offset-1").attr({
+            'href': '#',
+            'id': utubID + '-' + urlID
+        });
+        deleteUrl.text('Remove URL');
+        urlButtonsDiv.append(deleteUrl);
+    }
+    return urlButtonsDiv;
 };
 
 /**
@@ -772,82 +877,6 @@ function deleteUTubURL(urlToDel) {
 };
 
 /**
- * @function getURLInfo
- * Performs an AJAX call to the server requesting URL info for the 
- * requested URL.
- * @param {string} utubID - The ID of the UTub containing the URL
- * @param {string} urlID - The ID of the URL of interest
- */
-function getURLInfo(utubID, urlID) {
-    let request = $.getJSON({
-        'url': '/get_url_info/' + utubID + '-' + urlID,
-    });
-
-    request.done(function(url_info, textStatus, xhr) {
-        if (xhr.status == 200) {
-            showURLInfo(url_info);
-        };
-    });
-
-    request.fail(function(xhr, textStatus, error){
-        if (xhr.status == 403) {
-            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category);
-        } else {
-            console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
-            console.log("Error: " + error);
-        };
-    });
-};
-
-/**
- * @function showURLInfo
- * Given the URL info in Object format, shows the relevant URL description
- * and whomever added it. Creates and displays an Add Tag button for adding
- * tags to the URL. If the current user added the URL, or current user is
- * the creator of the UTub, then also adds a "Delete URL" button to delete
- * the URL from the UTub.
- * @param {Object} urlInfo - Contains:
- *      "urlAddedBy" -> A string containing username of whomever created it
- *      "urlDesc" -> A string for the description of the URL
- *      "utubID" -> The ID of the UTub currently in
- *      "urlID" -> The ID of the URL currently looking at
- *      "canRemove" -> A boolean depicting whether user has permission to delete
- */
-function showURLInfo(urlInfo) {
-    $(".url-info").empty();
-    $(".url-buttons").empty();
-    let addedBy = $('<p></p>').addClass("added-by").css('display', 'inline');
-    addedBy.text('Added by: ' + urlInfo.urlAddedBy);
-    $(".url-info").append(addedBy);
-
-    let urlDescription = $('<p></p>').addClass("url-description");
-    if (urlInfo.urlDesc) {
-        urlDescription.text(urlInfo.urlDesc);
-    } else {
-        urlDescription.text("No description available.");
-    };
-    $(".url-info").append(urlDescription);
-
-    let addTag = $('<a></a>').addClass("btn btn-primary btn-sm py-0 add-tag col-12").attr({
-        'href': '#',
-        'id': urlInfo.utubID + '-' + urlInfo.urlID
-    });
-    addTag.text("Add Tag");
-    $(".url-buttons").append(addTag);
-
-    if (urlInfo.canRemove) {
-        let deleteUrl = $('<a></a>').addClass("btn btn-warning btn-sm py-0 del-link col-4 offset-1").attr({
-            'href': '#',
-            'id': urlInfo.utubID + '-' + urlInfo.urlID
-        });
-        deleteUrl.text('Remove URL');
-        addTag.removeClass('col-12').addClass('col-7');
-        $(".url-buttons").append(deleteUrl);
-
-    };
-};
-
-/**
  * @function addTag
  * Performs an AJAX request to add a tag to the selected URL in the selected UTub.
  * URLs in a given UTub can only have 5 tags each.
@@ -873,12 +902,15 @@ function addTag(utubID, urlID){
             request.done(function(addTagSuccess, textStatus, xhr) {
                 if (xhr.status == 200) {
                     $('#Modal').modal('hide');
+                    // Just add tag to URL card here
+                    const urlTagParent = $("#url" + urlID).find("tag-span");
 
                     // Refresh UTub info and then reselect the URL user had previously chosen
-                    getUtubInfo(addTagSuccess.utubID)
-                        .then(function(result) {
-                            $("#url" + urlID).css('background', 'silver');
-                        });
+                    // getUtubInfo(addTagSuccess.utubID)
+                    //     .then(function(result) {
+                    //         $("#url" + urlID).css('background', 'silver');
+                    //         getURLInfo(utubID, urlID);
+                    //     });
                     
                     globalFlashBanner(addTagSuccess.message, addTagSuccess.category);
                 }; 
@@ -987,26 +1019,13 @@ function checkIfTagChoiceRemoved(tagsInUtub, tagChoices) {
     };
 };
 
-/**
- * @function tagElemBuilder
- * Generates a tag element with the given tag details, and returns it.
- * @param {*} tagDetails - Contains:
- *      "id" -> THe ID of the tag
- *      "tag_string" -> A string of the tag itself
- * @returns - A tag HTML element.
- */
-function tagElemBuilder(tagDetails){
-    const tagElem = $('<span></span>').addClass('badge badge-pill badge-light tag-badge');
-    const tagID = tagDetails.id;
-    const tag = tagDetails.tag_string;
-    const tagNameElem = $('<span></span>').text(tag);
-    const closeButtonOuter = $('<span></span>').prop('aria-hidden', false).attr('id', 'tag' + tagID);
-    const closeButtonInner = $('<a></a>').addClass('btn btn-sm btn-outline-link border-0 tag-del').html('&times;').prop('href', '#');
-    closeButtonOuter.append(closeButtonInner);
-    tagElem.append(tagNameElem);
-    tagElem.append(closeButtonOuter);
-    return tagElem;
-};
+function deselectMemberAndUrl() {
+    $('.url-card').css('background', 'none');
+    $('.member-card').css('background', 'gray');
+    let noUrlSelected = $("<p></p>").addClass("url-description").text("Add/Select a URL!");
+    $('.url-info').empty().append(noUrlSelected);
+    $('.url-buttons').empty();
+}
 
 /**
  * @function ModalFormErrorGenerator

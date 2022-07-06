@@ -32,12 +32,8 @@ form {
     height: 50%;
 }
 
-#UrlOptionsDeck {
-    height: 20%;
-}
-
 #MemberDeck, #ChatDeck {
-    height: 40%;
+    height: 50%;
 }
 
 .panel {
@@ -91,6 +87,10 @@ form {
     padding-left: 15px;
     padding-top: 10px;
     padding-bottom: 10px;
+}
+
+.url-card-desc, .url-card-buttons {
+    padding: 0px;
 }
 
 .del-link, .add-tag {

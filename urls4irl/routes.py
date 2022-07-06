@@ -471,6 +471,10 @@ def delete_url():
         utub_url_user_row = Utub_Urls.query.filter_by(utub_id=utub_id, url_id=url_id).all()
 
         db.session.delete(utub_url_user_row[0])
+
+        # Remove all tags associated with this URL in this UTub as well
+        Url_Tags.query.filter_by(utub_id=utub_id, url_id=url_id).delete()
+
         db.session.commit()
 
         delete_success = {
@@ -620,6 +624,7 @@ def add_tag(utub_id: int, url_id: int):
 
             # Associate with the UTub and URL
             utub_url_tag = Url_Tags(utub_id=utub_id, url_id=url_id, tag_id=tag_already_created.id)
+            tag_id = tag_already_created.id
 
         else:
             # Create tag, then associate with this UTub and URL
@@ -627,6 +632,7 @@ def add_tag(utub_id: int, url_id: int):
             db.session.add(new_tag)
             db.session.commit()
             utub_url_tag = Url_Tags(utub_id=utub_id, url_id=url_id, tag_id=new_tag.id)
+            tag_id = new_tag.id
 
         db.session.add(utub_url_tag)
         db.session.commit()
@@ -635,6 +641,7 @@ def add_tag(utub_id: int, url_id: int):
             'message': 'Tag added successfully.',
             'category': 'info',
             'tag': tag_to_add,
+            'tagID': tag_id,
             'url': utub_url[0].url_in_utub.url_string,
             'utubID': utub_id
         }

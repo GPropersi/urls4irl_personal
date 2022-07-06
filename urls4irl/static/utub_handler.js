@@ -23,7 +23,8 @@ $(document).ready(function() {
     });
 
     // Add a tag to a URL on button click
-    $(document).on('click', '.add-tag', function() {
+    $(document).on('click', '.add-tag', function(event) {
+        event.stopPropagation();
         const linkToAddTagTo = $(this).attr('id');
         const utubAndURL = linkToAddTagTo.split('-');
         const utubID = utubAndURL[0];
@@ -32,7 +33,8 @@ $(document).ready(function() {
     });
 
     // Remove a tag on button click
-    $(document).on('click', '.tag-del', function() {
+    $(document).on('click', '.tag-del', function(event) {
+        event.stopPropagation();
         const tagToRemove = $(this).parent().parent();
         const tagData = tagToRemove.attr('id');
         removeTag(tagToRemove, tagData);
@@ -51,12 +53,22 @@ $(document).ready(function() {
 
     // On URL card selection show URL info
     $(document).on('click', '.url-card', function() {
-        $(".url-card-desc").hide();
-        $(".url-card-buttons").hide();
-        $('.url-card').css('background', 'none');
-        $(this).css('background', 'silver');
-        $(this).find(".url-card-desc").show();
-        $(this).find(".url-card-buttons").show();
+        const urlCard = $(this);
+        let url_card_desc = $(this).find(".url-card-desc")[0];
+
+        // Deselect the card if the user clicks on it again
+        if ($(url_card_desc).is(":visible")) {
+            urlCard.find(".url-card-desc").hide(100);
+            urlCard.find(".url-card-buttons").hide(100);
+            urlCard.css('background', 'none');
+        } else {
+            $(".url-card-desc").hide(100);
+            $(".url-card-buttons").hide(100);
+            $('.url-card').css('background', 'none');
+            urlCard.css('background', 'silver');
+            urlCard.find(".url-card-desc").show(100);
+            urlCard.find(".url-card-buttons").show(100);
+        };
     });
 
     // Add a member on button click
@@ -78,7 +90,7 @@ $(document).ready(function() {
         let selected = utubSelections.filter(found => utubSelections[found].checked);
 
         if (!jQuery.isEmptyObject(selected)) {
-            let utubId = selected[0].id.replace('utub', '')
+            let utubId = selected[0].id.replace('utub', '');
             removeMemberFromUtub(userToRemove, utubId);
         };
     });
@@ -108,11 +120,6 @@ $(document).ready(function() {
             let utubId = selected[0].id.replace('utub', '');
             deleteUtub(utubId);
         };
-    });
-
-    // To deselect the selected URL or member card by clicking elsewhere on the screen
-    $(document.body).click(function() {
-        deselectMemberAndUrl();
     });
 
     var csrftoken = $('meta[name=csrf-token]').attr('content')
@@ -187,8 +194,8 @@ function userHasUtubs(hasUTubs){
         $('.utub-title').text('No UTubs found.');
         $('.members-holder').empty();
         $('.tags-for-utub').empty();
-    }
-}
+    };
+};
 
 /**
  * @function displayUtubData
@@ -256,7 +263,7 @@ function displayUtubData(utubData) {
             const urlDesc = url.notes;
 
             // Add div before tag div for label of whomever added this URL and description of URL
-            const descDiv = urlDescriptionElemBuilder(urlDesc, urlAdder.username)
+            const descDiv = urlDescriptionElemBuilder(urlDesc, urlAdder.username);
             
             innerUrlCard.append(descDiv);
 
@@ -329,8 +336,8 @@ function urlDescriptionElemBuilder(urlDesc, urlAdder) {
     descDiv.append(addedBy);
     descDiv.append(urlDescription);
 
-    return descDiv
-}
+    return descDiv;
+};
 
 /**
  * @function tagElemBuilder
@@ -373,7 +380,6 @@ function urlDescriptionElemBuilder(urlDesc, urlAdder) {
  * @returns - A div containing the relevant buttons for this URL.
  */
  function urlButtonsElemBuilder(utubID, urlID, currentUser, urlAdder, utubCreator){
-    console.log(currentUser)
     const urlButtonsDiv = $('<div></div>').addClass('card-body url-card-buttons col-6');
     let addTag = $('<a></a>').addClass("btn btn-primary btn-sm py-0 add-tag col-4").attr({
         'href': '#',
@@ -389,7 +395,7 @@ function urlDescriptionElemBuilder(urlDesc, urlAdder) {
         });
         deleteUrl.text('Remove URL');
         urlButtonsDiv.append(deleteUrl);
-    }
+    };
     return urlButtonsDiv;
 };
 
@@ -419,7 +425,7 @@ function displayMembers(utubMembers, currentUser, creator) {
 
         // Only display members if they aren't already being displayed
         if ($('#user' + member.id).length > 0) {
-            continue
+            continue;
         };
 
         let memberCard = $('<div></div>').addClass('card member-card');
@@ -700,7 +706,7 @@ function createUtub() {
                 };
                 console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
                 console.log("Error: " + error);
-            })
+            });
         });
     });
 };
@@ -902,15 +908,21 @@ function addTag(utubID, urlID){
             request.done(function(addTagSuccess, textStatus, xhr) {
                 if (xhr.status == 200) {
                     $('#Modal').modal('hide');
-                    // Just add tag to URL card here
-                    const urlTagParent = $("#url" + urlID).find("tag-span");
+                    //Add tag to URL card here
+                    let urlTagParent = $("#url" + urlID).find($(".tag-span"))[0];
 
-                    // Refresh UTub info and then reselect the URL user had previously chosen
-                    // getUtubInfo(addTagSuccess.utubID)
-                    //     .then(function(result) {
-                    //         $("#url" + urlID).css('background', 'silver');
-                    //         getURLInfo(utubID, urlID);
-                    //     });
+                    let tagToAdd = Object();
+                    tagToAdd.id = addTagSuccess.tagID;
+                    tagToAdd.tag_string = addTagSuccess.tag;
+
+                    let tagCounter = urlTagParent.childElementCount;
+                    let tagBadge = tagElemBuilder(utubID, urlID, tagToAdd);
+                    if (tagCounter === 0) {
+                        tagBadge.css("margin-left", "0px");
+                        tagCounter += 1;
+                    };
+    
+                    urlTagParent.append(tagBadge[0]);
                     
                     globalFlashBanner(addTagSuccess.message, addTagSuccess.category);
                 }; 
@@ -1019,12 +1031,18 @@ function checkIfTagChoiceRemoved(tagsInUtub, tagChoices) {
     };
 };
 
+/**
+ * @function deselectMemberAndUrl
+ * Deselects the selectable elements when user clicks elsewhere on body.
+ */
 function deselectMemberAndUrl() {
     $('.url-card').css('background', 'none');
     $('.member-card').css('background', 'gray');
     let noUrlSelected = $("<p></p>").addClass("url-description").text("Add/Select a URL!");
     $('.url-info').empty().append(noUrlSelected);
     $('.url-buttons').empty();
+    $('.url-card-desc').hide();
+    $('.url-card-buttons').hide();
 }
 
 /**
@@ -1043,7 +1061,7 @@ function ModalFormErrorGenerator(modalFormErrors){
         .insertAfter('#' + key).show();
         $('#' + key).addClass('is-invalid');
     };
-}
+};
 
 /**
  * @function flashMessageBanner
@@ -1053,7 +1071,7 @@ function ModalFormErrorGenerator(modalFormErrors){
  * @returns An HTML div element that is displayed with a message and given the prescribed category
  */
 function flashMessageBanner(message, category) {
-    $('.flash-message').remove()
+    $('.flash-message').remove();
     const flashElem = $('<div></div>').addClass('alert');
     flashElem.addClass('alert-dismissible');
     flashElem.addClass('alert-' + category);

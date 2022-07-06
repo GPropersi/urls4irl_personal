@@ -11,8 +11,8 @@ URLS4IRL was born with the idea to be able to easily share URLs with friends, co
 It allows each user to create one or many UTubs (URL Tubs) where they can:
 - Add/remove URLs
 - Add/remove other users
-- Add tags to each URL
-- Add descriptions to each UTub, and notes to each URL
+- Add/remove tags to each URL
+- Add descriptions to each UTub, and descriptions to each URL
 - Chat with other users in their UTub
 
 It is built with Flask, and uses a SQLite database with an eye towards migrating to a PostgreSQL
@@ -27,20 +27,24 @@ This is my first web app and I am excited to share it with the world! Come watch
 > In no particular order
 
 - [ ] **Frontend** 
-    - [ ] Show URLs in a UTub filtered on user selected tag or tags
+    - [ ] Filter URLs in a UTub based on user selected tag or tags
     - [ ] Tidy up homepage
-    - [ ] Scrollable Divs for each Panel
+    - [ ] Make responsive for mobile devices as well
+    - [ ] Allow users to drag and drop URLs or UTubs in a custom order
 - [ ] **Backend** 
     - [ ] Migrating SQLite to PostgreSQL
     - [ ] RestAPI development to lead into mobile app development
+    - [ ] Allow user to update a URL description
+    - [ ] Allow user to update a URL
+    - [ ] Allow user to update a UTub description
+    - [ ] Create a User-Settings table to store preferences and preferred order of URLs/UTubs
 - [ ] Error routing/Custom error page
     - [x] Most http errors are shown in a banner, however 404 will require it's own unique page 
 - [ ] Email confirmation/registration
 - [ ] Instant messaging system per UTub
 - [ ] Hosting this on Heroku
-- [ ] User account customization
+- [ ] User account customization (profile pictures?)
 - [ ] A license!
-- [ ] User customization (profile pictures?)
 
 
 ## :rocket: Completed
@@ -56,6 +60,9 @@ This is my first web app and I am excited to share it with the world! Come watch
     - [x] User can remove a URL
     - [x] Show all members of a UTub
     - [x] Make frontend AJAX call to add URLs to a UTub
+    - [x] Scrollable Divs for each Panel
+    - [x] User can add or remove a tag
+    - [x] Each URL is a card that displays all relevant info on click
 - [x] **Backend (So Far)** 
     - [x] Backend routing for basic User/UTub/URLs/Tag functionalities
     - [x] Correct permissions for certain events:
@@ -73,5 +80,6 @@ This is my first web app and I am excited to share it with the world! Come watch
 ## :hammer: Challenges
 - [X] Integrate AJAX requests with Flask-WTF and modals to correctly display user input errors
 - [X] Migrate the SQLite database when changes had to be made instead of deleting and recreating the database
+- [X] Ensuring correct permissions for actions, i.e. only the creator of a UTub can delete a UTub
 - [X] Implementing CRUD operations on nested components
     - i.e. for a tag, on a url, contained in a UTub

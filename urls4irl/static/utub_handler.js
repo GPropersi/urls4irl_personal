@@ -124,6 +124,18 @@ $(document).ready(function() {
         };
     });
 
+    // On click of a tag for filtering
+    $('.tags-for-utub').on('change', 'input[type=checkbox]', function(){
+        const tagSelected = $(this);
+        const tagID = tagSelected.attr("tag-id");
+        const tagName = tagSelected.attr("id");
+
+        if (!tagSelected.prop("checked")) {
+            filterHideURLs(tagID);
+        };
+            
+    });
+
     var csrftoken = $('meta[name=csrf-token]').attr('content')
     $.ajaxSetup({
         beforeSend: function(xhr, settings) {
@@ -578,10 +590,17 @@ function displayTags(utubTags) {
         const noTags = $('<h4></h4>').addClass('no-tags').html('No tags in this UTub. Add some!');
         utubTagsForm.append(noTags);
     } else {
+        let selectAllTag = Object();
+        selectAllTag.tag_string = "Select All";
+        selectAllTag.id = "select-all-tags";
+
         for (let tag of utubTags) {
             let newTag = tagSelectionElemBuilder(tag);
             utubTagsForm.append(newTag);
         };
+
+        selectAllBox = tagSelectionElemBuilder(selectAllTag);
+        utubTagsForm.prepend(selectAllBox);
     };
 };
 
@@ -597,7 +616,7 @@ function tagSelectionElemBuilder(tagDetails){
     const tagName = tagDetails.tag_string;
     const tagID = tagDetails.id;
 
-    let newTag = $('<div></div>').addClass('form-check').addClass('tag-choice').attr("tag-choice", tagID);
+    let newTag = $('<div></div>').addClass('tag-choice').attr("tag-choice", tagID);
 
     let tagLabel = $('<label></label>').addClass('form-check-label').attr({
         'for': tagName,
@@ -608,8 +627,8 @@ function tagSelectionElemBuilder(tagDetails){
         'type': 'checkbox',
         'id': tagName,
         'name': tagName,
-        'value': tagID,
-    });
+        'tag-id': tagID,
+    }).prop('checked', true);;
 
     newTag.append(tagCheckbox);
     newTag.append(tagLabel);
@@ -969,6 +988,36 @@ function addTag(utubID, urlID){
     });
 };
 
+function filterHideURLs(tagID) {
+    const urls = $('.url-card');
+
+    for (i=0; i < urls.length; i++){
+        let currentURL = $(urls[i]);
+        const currentURLTags = currentURL.find('.tag-span').children();
+        let numbOfHiddenTags = 0;
+
+        $.each(currentURLTags, function(idx, tag) {
+            if (!$(tag).is(":visible")) {
+                numbOfHiddenTags++;
+            };
+        });
+
+        let numbOfTagsOnCurrentURL = currentURLTags.length - numbOfHiddenTags;
+
+        for (let tag of currentURLTags){
+            let currTag = $(tag);
+            if (currTag.attr('tag') == tagID) {
+                currTag.hide();
+                numbOfTagsOnCurrentURL--;
+            };
+
+            if (!numbOfTagsOnCurrentURL){
+                currentURL.hide();
+            };
+        };
+    };
+};
+
 /**
  * @function removeTag
  * Performs an AJAX requst with the given tag data to remove it from given URL.
@@ -1022,11 +1071,17 @@ function checkIfTagChoiceAdded(tagDetails) {
     let tagElemIfExists = $(".tags-for-utub").find("[tag-choice=" + tagID + "]");
 
     if (tagElemIfExists.length === 0) {
+        let selectAllTag = Object();
+        selectAllTag.tag_string = "Select All";
+        selectAllTag.id = "select-all-tags";
+        selectAllBox = tagSelectionElemBuilder(selectAllTag);
+        utubTagsForm.append(selectAllBox);
+
         let utubTagsForm = $(".tags-for-utub");
         let newTag = tagSelectionElemBuilder(tagDetails);
         utubTagsForm.append(newTag);
-    }
-}
+    };
+};
 
 /**
  * @function checkIfTagChoiceRemoved
@@ -1054,7 +1109,9 @@ function checkIfTagChoiceRemoved(tagsInUtub, tagChoices) {
     // Remove the tag from display if no longer present on any URLs on the UTub
     for (let tagChoice of tagChoices) {
         const tagChoiceID = $(tagChoice).attr('tag-choice');
-        if (!tagIDsInUtub.includes(tagChoiceID)) {
+        if (tagChoiceID === "select-all-tags") {
+            continue
+        } else if (!tagIDsInUtub.includes(tagChoiceID)) {
             $(tagChoice).remove();
         };
     };

@@ -97,6 +97,8 @@ $(document).ready(function() {
 
     // On click of a member card
     $(document).on('click', '.member-card', function() {
+        // Allow user to deselect a member
+
         $('.member-card').css('background', 'gray');
         let selectedUser = $(this).css('background', 'silver');
         let selectedUserId = selectedUser.attr('id').replace('user','');
@@ -279,7 +281,7 @@ function displayUtubData(utubData) {
 
                 for (let urlTagID of urlTags) {
                     const tagToAdd = tags.find(element => element.id === urlTagID);
-                    let tagBadge = tagElemBuilder(utubData.id, url.url_id, tagToAdd);
+                    let tagBadge = tagBadgeBuilder(utubData.id, url.url_id, tagToAdd);
                     if (tagCounter === 0) {
                         tagBadge.css("margin-left", "0px");
                         tagCounter += 1;
@@ -340,7 +342,7 @@ function urlDescriptionElemBuilder(urlDesc, urlAdder) {
 };
 
 /**
- * @function tagElemBuilder
+ * @function tagBadgeBuilder
  * Generates a tag badge with the given tag details, and returns it.
  * @param {number} utubID - ID of this UTub
  * @param {number} urlID - ID of this URL
@@ -349,7 +351,7 @@ function urlDescriptionElemBuilder(urlDesc, urlAdder) {
  *      "tag_string" -> A string of the tag itself
  * @returns - A tag badge HTML element.
  */
- function tagElemBuilder(utubID, urlID, tagDetails){
+ function tagBadgeBuilder(utubID, urlID, tagDetails){
     const tagElem = $('<span></span>').addClass('badge badge-pill badge-light tag-badge');
     const tagID = tagDetails.id;
     const tag = tagDetails.tag_string;
@@ -577,30 +579,43 @@ function displayTags(utubTags) {
         utubTagsForm.append(noTags);
     } else {
         for (let tag of utubTags) {
-            let tagName = tag.tag_string;
-            let tagID = tag.id;
-
-            let tagLabel = $('<label></label>').addClass('form-check-label').attr({
-                'for': tagName,
-            });
-            tagLabel.text(tagName);
-
-            let tagCheckbox = $('<input>').addClass('form-check-input').attr({
-                'type': 'checkbox',
-                'id': tagName,
-                'name': tagName,
-                'value': tagID,
-            });
-
-            let newTag = $('<div></div>');
-            newTag.addClass('form-check').addClass('tag-choice');
-            newTag.attr("tag-choice", tagID);
-            newTag.append(tagCheckbox);
-            newTag.append(tagLabel);
+            let newTag = tagSelectionElemBuilder(tag);
             utubTagsForm.append(newTag);
         };
     };
 };
+
+/**
+ * @function tagSelectionElemBuilder
+ * Builds a selection element for a tag, used to filter URLs based on tags.
+ * @param {Object} tagDetails - Contains:
+ *      "id": The id of the tag
+ *      "tag_string": The tag itself 
+ * @returns - An HTML form element with a checkbox describing a tag
+ */
+function tagSelectionElemBuilder(tagDetails){
+    const tagName = tagDetails.tag_string;
+    const tagID = tagDetails.id;
+
+    let newTag = $('<div></div>').addClass('form-check').addClass('tag-choice').attr("tag-choice", tagID);
+
+    let tagLabel = $('<label></label>').addClass('form-check-label').attr({
+        'for': tagName,
+    });
+    tagLabel.text(tagName);
+
+    let tagCheckbox = $('<input>').addClass('form-check-input').attr({
+        'type': 'checkbox',
+        'id': tagName,
+        'name': tagName,
+        'value': tagID,
+    });
+
+    newTag.append(tagCheckbox);
+    newTag.append(tagLabel);
+
+    return newTag;
+}
 
 /**
  * @function putUtubNames
@@ -916,13 +931,16 @@ function addTag(utubID, urlID){
                     tagToAdd.tag_string = addTagSuccess.tag;
 
                     let tagCounter = urlTagParent.childElementCount;
-                    let tagBadge = tagElemBuilder(utubID, urlID, tagToAdd);
+                    let tagBadge = tagBadgeBuilder(utubID, urlID, tagToAdd);
                     if (tagCounter === 0) {
                         tagBadge.css("margin-left", "0px");
                         tagCounter += 1;
                     };
     
                     urlTagParent.append(tagBadge[0]);
+
+                    // Need to add tag to Tag Panel if not already displayed
+                    checkIfTagChoiceAdded(tagToAdd);
                     
                     globalFlashBanner(addTagSuccess.message, addTagSuccess.category);
                 }; 
@@ -999,6 +1017,17 @@ function removeTag(tagElem, tagData) {
     });
 };
 
+function checkIfTagChoiceAdded(tagDetails) {
+    const tagID = tagDetails.id;
+    let tagElemIfExists = $(".tags-for-utub").find("[tag-choice=" + tagID + "]");
+
+    if (tagElemIfExists.length === 0) {
+        let utubTagsForm = $(".tags-for-utub");
+        let newTag = tagSelectionElemBuilder(tagDetails);
+        utubTagsForm.append(newTag);
+    }
+}
+
 /**
  * @function checkIfTagChoiceRemoved
  * Reads in the all unique tag HTML elements under each URL for the selected UTub.
@@ -1030,20 +1059,6 @@ function checkIfTagChoiceRemoved(tagsInUtub, tagChoices) {
         };
     };
 };
-
-/**
- * @function deselectMemberAndUrl
- * Deselects the selectable elements when user clicks elsewhere on body.
- */
-function deselectMemberAndUrl() {
-    $('.url-card').css('background', 'none');
-    $('.member-card').css('background', 'gray');
-    let noUrlSelected = $("<p></p>").addClass("url-description").text("Add/Select a URL!");
-    $('.url-info').empty().append(noUrlSelected);
-    $('.url-buttons').empty();
-    $('.url-card-desc').hide();
-    $('.url-card-buttons').hide();
-}
 
 /**
  * @function ModalFormErrorGenerator

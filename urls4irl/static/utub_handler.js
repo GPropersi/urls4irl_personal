@@ -130,8 +130,16 @@ $(document).ready(function() {
         const tagID = tagSelected.attr("tag-id");
         const tagName = tagSelected.attr("id");
 
-        if (!tagSelected.prop("checked")) {
+        if (tagID == "select-all-tags") {
+            // Handle showing all or hiding all
+            filterSelectAllPressed(tagSelected);
+        } else if (!tagSelected.prop("checked")) {
+            // Handle if a specific tag is unchecked
+            $("input[tag-id='select-all-tags']").prop("checked", false);
             filterHideURLs(tagID);
+        } else {
+            // Handle if a specific tag is checked
+            filterShowURLs(tagID);
         };
             
     });
@@ -587,9 +595,11 @@ function displayTags(utubTags) {
     let utubTagsForm = $(".tags-for-utub").empty();
     $('.no-tags').remove();
     if (utubTags.length === 0) {
-        const noTags = $('<h4></h4>').addClass('no-tags').html('No tags in this UTub. Add some!');
+        const noTags = $('<h4></h4>').addClass('no-tags').html('No tags in this UTub. Add a tag to a URL!');
         utubTagsForm.append(noTags);
+        utubTagsForm.css({'padding-left': 0});
     } else {
+        utubTagsForm.css({'padding-left': ''});
         let selectAllTag = Object();
         selectAllTag.tag_string = "Select All";
         selectAllTag.id = "select-all-tags";
@@ -600,6 +610,7 @@ function displayTags(utubTags) {
         };
 
         selectAllBox = tagSelectionElemBuilder(selectAllTag);
+        selectAllBox.attr("id", "selectAllTags");
         utubTagsForm.prepend(selectAllBox);
     };
 };
@@ -623,9 +634,9 @@ function tagSelectionElemBuilder(tagDetails){
     });
     tagLabel.text(tagName);
 
-    let tagCheckbox = $('<input>').addClass('form-check-input').attr({
+    let tagCheckbox = $('<input>').addClass('form-check-input tag-box').attr({
         'type': 'checkbox',
-        'id': tagName,
+        'id': tagID,
         'name': tagName,
         'tag-id': tagID,
     }).prop('checked', true);;
@@ -988,6 +999,11 @@ function addTag(utubID, urlID){
     });
 };
 
+/**
+ * @function filterHideURLs
+ * Hides URL cards based on the selected tag IDs
+ * @param {string} tagID - The ID of the tag the user has clicked to hide
+ */
 function filterHideURLs(tagID) {
     const urls = $('.url-card');
 
@@ -1007,14 +1023,77 @@ function filterHideURLs(tagID) {
         for (let tag of currentURLTags){
             let currTag = $(tag);
             if (currTag.attr('tag') == tagID) {
-                currTag.hide();
+                currTag.hide(100);
                 numbOfTagsOnCurrentURL--;
             };
 
             if (!numbOfTagsOnCurrentURL){
-                currentURL.hide();
+                currentURL.hide(100);
             };
         };
+    };
+};
+
+/**
+ * @function filterShowURLs
+ * Shows URLs that contain the selected tag
+ * @param {string} tagID - The ID of the tag chosen to hide
+ */
+function filterShowURLs(tagID) {
+    const urls = $('.url-card');
+    const utubTagsForm = $('.tags-for-utub');
+
+    for (i=0; i < urls.length; i++){
+        let currentURL = $(urls[i]);
+        const currentURLTags = currentURL.find('.tag-span').children();
+
+        for (let tag of currentURLTags){
+            let currTag = $(tag);
+            if (currTag.attr('tag') == tagID) {
+                if (!currentURL.is(":visible")){
+                    currentURL.show(100);
+                };
+                currTag.show(100);
+            };
+        };
+    };
+
+    const numbOfTagCheckboxes = utubTagsForm.find('[tag-id]').length;
+    const numbOfTagCheckboxesChecked = utubTagsForm.find('input[type=checkbox]:checked').length;
+
+    // If all tags have been selected, also select the Select All checkbox
+    if (numbOfTagCheckboxes - numbOfTagCheckboxesChecked === 1) {
+        $("#select-all-tags").prop("checked", true);
+    };
+};
+
+/**
+ * @function filterSelectAllPressed
+ * Hides or shows all URL cards containing tags for this UTub
+ * @param {Object} selectAllTag - The checkbox element for Select All tags
+ */
+function filterSelectAllPressed(selectAllTag) {
+    const urls = $('.url-card');
+    const urlTags = $('.tag-badge');
+    const tagCheckboxes = $('.tag-box');
+
+    if (selectAllTag.prop("checked")) {
+        // Show all URLs and tags
+        urls.show(100);
+        urlTags.show(100);
+        tagCheckboxes.prop("checked", true);
+    } else {
+        // Only hide URL Cards that contain tags
+        for (let i = 0; i < urls.length; i++) {
+            const currentURL = $(urls[i]);
+            const numbOfTagsForURL = currentURL.find(".tag-span")[0].childElementCount;
+
+            if (numbOfTagsForURL > 0){
+                currentURL.hide(100);
+                currentURL.find('.tag-badge').hide(100);
+            };
+        };
+        tagCheckboxes.prop("checked", false);
     };
 };
 
@@ -1068,19 +1147,25 @@ function removeTag(tagElem, tagData) {
 
 function checkIfTagChoiceAdded(tagDetails) {
     const tagID = tagDetails.id;
-    let tagElemIfExists = $(".tags-for-utub").find("[tag-choice=" + tagID + "]");
+    const utubTagsForm = $('.tags-for-utub');
+    let tagElemIfExists = utubTagsForm.find("[tag-choice='" + tagID + "']");
 
-    if (tagElemIfExists.length === 0) {
+    if (utubTagsForm.find("[tag-choice]").length === 0) {
+        $('.no-tags').remove()
+        utubTagsForm.css({'padding-left': ''});
+
         let selectAllTag = Object();
         selectAllTag.tag_string = "Select All";
         selectAllTag.id = "select-all-tags";
         selectAllBox = tagSelectionElemBuilder(selectAllTag);
         utubTagsForm.append(selectAllBox);
+    }
 
-        let utubTagsForm = $(".tags-for-utub");
+    if (tagElemIfExists.length === 0) {
         let newTag = tagSelectionElemBuilder(tagDetails);
-        utubTagsForm.append(newTag);
+        utubTagsForm.append(newTag);   
     };
+  
 };
 
 /**

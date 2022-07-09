@@ -11,7 +11,6 @@ from flask_cors import CORS
 app = Flask(__name__)
 app.config.from_object(Config)
 
-#app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///urls4irl_db.db"
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://localhost/ggpropersi"
 Session(app)
 

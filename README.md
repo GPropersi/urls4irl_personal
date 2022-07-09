@@ -27,12 +27,10 @@ This is my first web app and I am excited to share it with the world! Come watch
 > In no particular order
 
 - [ ] **Frontend** 
-    - [ ] Filter URLs in a UTub based on user selected tag or tags
     - [ ] Tidy up homepage
     - [ ] Make responsive for mobile devices as well
     - [ ] Allow users to drag and drop URLs or UTubs in a custom order
 - [ ] **Backend** 
-    - [ ] Migrating SQLite to PostgreSQL
     - [ ] RestAPI development to lead into mobile app development
     - [ ] Allow user to update a URL description
     - [ ] Allow user to update a URL
@@ -63,6 +61,7 @@ This is my first web app and I am excited to share it with the world! Come watch
     - [x] Scrollable Divs for each Panel
     - [x] User can add or remove a tag
     - [x] Each URL is a card that displays all relevant info on click
+    - [x] Filter URLs in a UTub based on user selected tag or tags
 - [x] **Backend (So Far)** 
     - [x] Backend routing for basic User/UTub/URLs/Tag functionalities
     - [x] Correct permissions for certain events:
@@ -76,6 +75,7 @@ This is my first web app and I am excited to share it with the world! Come watch
     - [x] Verification that the URL is valid
     - [x] Database tables with all many-to-many relationships considered
     - [x] Login/Logout/Registration capability
+    - [x] Migrating SQLite to PostgreSQL
 
 ## :hammer: Challenges
 - [X] Integrate AJAX requests with Flask-WTF and modals to correctly display user input errors

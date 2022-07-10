@@ -28,6 +28,16 @@ form {
     height: 100%;
 }
 
+#leftPanel {
+    padding-left: 0;
+    padding-right: 5px;
+}
+
+#rightPanel {
+    padding-right: 0;
+    padding-left: 5px;
+}
+
 #UTubDeck, #TagDeck {
     height: 50%;
 }

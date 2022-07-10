@@ -38,6 +38,7 @@ class Utub_Users(db.Model):
     @property
     def serialized_on_initial_load(self):
         """Returns the serialized object on initial load for this user, including UTub name and id."""
+
         return {
             "id": self.to_utub.id,
             "name": self.to_utub.name
@@ -101,14 +102,6 @@ class Url_Tags(db.Model):
     tagged_url = db.relationship("URLS", back_populates="url_tags")
     utub_containing_this_tag = db.relationship("Utub", back_populates="utub_url_tags")
 
-    @property
-    def serialized(self):
-        """Returns serialized object."""
-        return {
-            'tag': self.tag_item.serialized,
-            'tagged_url': self.tagged_url.serialized
-        }
-
 
 class User(db.Model, UserMixin):
     """Class represents a User, with their username, email, and hashed password."""
@@ -162,7 +155,6 @@ class Utub(db.Model):
     @property
     def serialized(self):
         """Return object in serialized form."""
-
         # self.utub_url_tags may contain repeats of tags since same tags can be on multiple URLs
         # Need to pull only the unique ones
         utub_tags = []
@@ -196,21 +188,13 @@ class URLS(db.Model):
     url_tags = db.relationship("Url_Tags", back_populates="tagged_url")
 
     @property
-    def serialized(self):
-        """Returns object in serialized form."""
-        return {
-            'id': self.id,
-            'url': self.url_string,
-            'tags': [tag.tag_item.serialized for tag in self.url_tags]
-        }
-
-    @property
     def serialized_for_utub(self):
         return {
             'id': self.id,
             'url': self.url_string,
             'tags': [int(tag.tag_item.serialized['id']) for tag in self.url_tags]
         }
+
 
 class Tags(db.Model):
     """Class represents a tag, more specifically a tag for a URL. A tag is added by a single user, but can be used as a tag for any URL. """

@@ -1,16 +1,7 @@
-"""
-Forms that are needed to be built here:
-UTub building form
-URL Creation form
-Tag form?
-
-"""
-
-from flask import Flask
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, InputRequired, ValidationError
-from urls4irl.models import User, URLS
+from wtforms.validators import Length, Email, EqualTo, InputRequired, ValidationError
+from urls4irl.models import User
 
 
 class UserRegistrationForm(FlaskForm):
@@ -117,8 +108,6 @@ class UTubNewURLForm(FlaskForm):
     url_description = StringField('URL Description', validators=[Length(max=140)])
 
     submit = SubmitField('Add URL to this UTub!')
-
-    #TODO Add validation for the URL here..
 
 
 class UTubNewUrlTagForm(FlaskForm):

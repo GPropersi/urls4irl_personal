@@ -17,7 +17,7 @@ if environment == 'development':
     app.config['DEBUG'] = True 
 
 else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = app.config["POSTGRES_URI_FOR_PROD"]
+    app.config['SQLALCHEMY_DATABASE_URI'] = app.config["postgres_uri"]
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # quiet warning message
 app.config['SESSION_TYPE'] = 'sqlalchemy'

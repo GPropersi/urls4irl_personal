@@ -13,6 +13,8 @@ class Config:
     SESSION_TYPE = "sqlalchemy"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     POSTGRES_URI_FOR_PROD = environ.get("DATABASE_URL")
+    if POSTGRES_URI_FOR_PROD:
+        POSTGRES_URI_FOR_PROD.replace("postgres", "postgresql")
     print(POSTGRES_URI_FOR_PROD)
 
 class DevelopmentConfig(Config):

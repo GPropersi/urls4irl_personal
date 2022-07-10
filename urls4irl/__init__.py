@@ -39,6 +39,8 @@ metadata = MetaData(naming_convention=convention)
 db = SQLAlchemy(app, metadata=metadata)
 migrate = Migrate(app, db, render_as_batch=True)
 
+app.session_interface.sql_session_model.__table__.create(bind = db.session.bind)
+
 csrf = CSRFProtect(app)
 
 login_manager = LoginManager(app)

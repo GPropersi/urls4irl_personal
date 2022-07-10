@@ -12,10 +12,10 @@ class Config:
     SESSION_PERMANENT = "False"
     SESSION_TYPE = "sqlalchemy"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    POSTGRES_URI_FOR_PROD = environ.get("DATABASE_URL")
-    if POSTGRES_URI_FOR_PROD:
-        POSTGRES_URI_FOR_PROD.replace("postgres", "postgresql")
-    print(POSTGRES_URI_FOR_PROD)
+    postgres_uri = environ.get("DATABASE_URL")
+    if postgres_uri and postgres_uri.startswith("postgres://"):
+        postgres_uri = postgres_uri.replace("postgres://", "postgresql://", 1)
+    print(postgres_uri)
 
 class DevelopmentConfig(Config):
     DEBUG = "True"

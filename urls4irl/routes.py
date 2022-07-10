@@ -18,6 +18,8 @@ def splash():
     """
     Splash page for an unlogged in user
     """
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
     return render_template('splash.html')
 
 @app.route('/home', methods=["GET"])

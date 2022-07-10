@@ -20,5 +20,3 @@ class Config:
         if postgres_uri.startswith("postgres://"):
             postgres_uri = postgres_uri.replace("postgres://", "postgresql://", 1)
         SQLALCHEMY_DATABASE_URI = postgres_uri
-        print(postgres_uri)
-

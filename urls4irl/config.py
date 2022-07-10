@@ -8,8 +8,11 @@ class Config:
     """Set Flask config variables."""
 
     FLASK_ENV = environ.get("FLASK_ENV")
-    DEBUG = "True"
     SECRET_KEY = environ.get("SECRET_KEY")
     SESSION_PERMANENT = "False"
-    SESSION_TYPE = "filesystem"
+    SESSION_TYPE = "sqlalchemy"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    POSTGRES_URI_FOR_PROD = environ.get("DATABASE_URL")
+
+class DevelopmentConfig(Config):
+    DEBUG = "True"

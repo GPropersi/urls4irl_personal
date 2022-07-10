@@ -12,10 +12,13 @@ class Config:
     SESSION_PERMANENT = "False"
     SESSION_TYPE = "sqlalchemy"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    postgres_uri = environ.get("DATABASE_URL")
-    if postgres_uri and postgres_uri.startswith("postgres://"):
-        postgres_uri = postgres_uri.replace("postgres://", "postgresql://", 1)
-    print(postgres_uri)
 
-class DevelopmentConfig(Config):
-    DEBUG = "True"
+    if FLASK_ENV == 'development':
+        SQLALCHEMY_DATABASE_URI = "postgresql://localhost/ggpropersi"
+    else:
+        postgres_uri = environ.get("DATABASE_URL")
+        if postgres_uri.startswith("postgres://"):
+            postgres_uri = postgres_uri.replace("postgres://", "postgresql://", 1)
+        SQLALCHEMY_DATABASE_URI = postgres_uri
+        print(postgres_uri)
+

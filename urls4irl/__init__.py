@@ -13,11 +13,11 @@ app.config.from_object(Config)
 environment = app.config['FLASK_ENV']
 
 if environment == 'development':
-    app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://localhost/ggpropersi"
+#     app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://localhost/ggpropersi"
     app.config['DEBUG'] = True 
 
-else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = app.config["postgres_uri"]
+# else:
+#     app.config['SQLALCHEMY_DATABASE_URI'] = app.config["postgres_uri"]
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # quiet warning message
 app.config['SESSION_TYPE'] = 'sqlalchemy'

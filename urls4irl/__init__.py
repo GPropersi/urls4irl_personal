@@ -16,7 +16,7 @@ if app.config['FLASK_ENV'] == 'development':
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # quiet warning message
 app.config['SESSION_TYPE'] = 'sqlalchemy'
-Session(app)
+sess = Session(app)
 
 """
 To get Flask-Migrate / alembic to work with SQLite, need to perform the following

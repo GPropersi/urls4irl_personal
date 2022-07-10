@@ -1,5 +1,3 @@
-from multiprocessing.sharedctypes import Value
-from sqlalchemy import true
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask import render_template, url_for, redirect, flash, request, jsonify, abort
 from urls4irl import app, db
@@ -8,7 +6,6 @@ from urls4irl.forms import (UserRegistrationForm, LoginForm, UTubForm,
 from urls4irl.models import User, Utub, URLS, Utub_Urls, Tags, Url_Tags, Utub_Users
 from flask_login import login_user, login_required, current_user, logout_user
 from urls4irl.url_validation import InvalidURLError, check_request_head
-from flask_cors import cross_origin
 import json
 
 """#####################        MAIN ROUTES        ###################"""
@@ -27,6 +24,9 @@ def splash():
 def home():
     """
     Splash page for logged in user. Loads and displays all UTubs, and contained URLs.
+
+    Can return an Error if there are invalid arguments in the URL, or the user
+    has requested access to a UTub they are not a part of.
     
     Args:
         /home : With no args, this returns all UTubIDs for the given user
@@ -34,8 +34,9 @@ def home():
                                 that the user clicked on
 
     Returns:
-        - All UTubIDs if no args
-        - Requested UTubID if a valid arg
+        On /home - All UTub names and IDs
+        On /home?UTubID=[int] - UTub name, creator, URLs, associated tags, and members for
+            requested UTub in a JSON file
     """
     if not request.args:
         # User got here without any arguments in the URL
@@ -70,8 +71,27 @@ def home():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    Logs in the user.
+
+    Client can send a GET or POST request.
+    On GET:
+        Returns the HTML WTForm for logging in a user.
+        Form inputs include:
+            Username
+            Password
+            
+    On POST:
+        On success, logs the user in and sends them to their requested
+            next page, or to their home page.
+        On failure, sends an error response back with JSON message.
+            Possible failures include:
+                Invalid credentials
+                Empty inputs
+    """
     if current_user.is_authenticated:
         return redirect(url_for('home'))
+
     login_form = LoginForm()
 
     if request.method == 'GET':
@@ -104,6 +124,27 @@ def login():
         
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    """
+    Registers a new user.
+
+    On GET:
+        Provides the HTML form data to register.
+        Form inputs include:
+            Username
+            Email
+            Email Confirmation
+            Password
+            Password Confirmation
+
+    On POST:
+        Checks the user's requested registration data.
+        On success, logs the user in and sends them to their home page.
+        On failure, returns errors used to populate the form.
+            Possible failures include:
+                Empty inputs
+                Unique inputs not unique (i.e. username, email)
+                Invalid confirmation inputs (email, password)
+    """
     if current_user.is_authenticated:
         return redirect(url_for('home'))
 
@@ -143,16 +184,29 @@ def logout():
 def create_utub():
     """
     User wants to create a new utub.
+
+    On GET:
+        Sends the HTML Form data required to make a new UTub.
+        Form inputs include:
+            UTub Name
+            UTub Description
+
+    On POST:
+        Checks the requested new UTub information.
+        On success, creates the UTub, and responds with a success code of 200.
+        On failure, returns errors used to populate the form.
+            Possible failures include:
+                Duplicate UTub name for this current user    
+                Empty required inputs
+    
     Assocation Object:
     https://docs.sqlalchemy.org/en/14/orm/basic_relationships.html#many-to-many
-    
     """
 
     utub_form = UTubForm()
 
     if request.method == 'GET':
         return render_template('_create_utub_form.html', utub_form=utub_form)
-    
     
     if utub_form.validate_on_submit():
         name = utub_form.name.data
@@ -193,16 +247,24 @@ def create_utub():
 @login_required
 def delete_utub():
     """
-    Creator wants to delete their UTub. It deletes all associations between this UTub and its contained
-    URLS and users.
+    Creator of the UTub wants to delete their UTub. It deletes all associations between 
+    this UTub and its contained URLS and users.
 
     https://docs.sqlalchemy.org/en/13/orm/cascades.html#delete
 
-    On POST, receives a JSON containing the UTubID to delete:
+    On POST:
+        Receives a JSON containing the UTubID to delete:
         UTubID (int): The ID of the UTub to be deleted
 
-    Example:
-    {'UTubID': 1}
+        Example:
+            {'UTubID': 1}
+
+    On successful deletion, sends back a 200 response code with a JSON message.
+    On unsuccessful deletion, sends back an error with a JSON message.
+        Possible failures include:
+            Invalid permission to delete this UTub
+            UTub does not exist
+            Invalid JSON sent along with the POST request
     """
     delete_utub_json = dict(request.get_json())
 
@@ -243,14 +305,15 @@ def update_utub_desc(utub_id: int):
     """
     Creator wants to update their UTub description.
     Description limit is 500 characters.
-    Form data required to be sent from the frontend with a parameter "url_description".
+    Form data required to be sent from the client with a parameter "url_description".
     
     On GET:
-            The previous UTub's description is sent as JSON to be included in the form for editing.
+        The previous UTub's description is sent as JSON to be included in the form for editing.
 
     On POST:
-            The new description is saved to the database for that UTub.
+        The new description is saved to the database for that UTub.
         Requires a JSON in the POST request body.
+
     Example:
     {
         "utub_description": "New UTub description."
@@ -294,15 +357,24 @@ def update_utub_desc(utub_id: int):
 @login_required
 def delete_user():
     """
-    Delete a user from a Utub. The creator of the Utub can delete anyone but themselves.
+    Deletes a user from a Utub. The creator of the Utub can delete anyone but themselves.
     Any user can remove themselves from a UTub they did not create.
     
-    POST Request is sent with a JSON indicating the UTub ID and User ID to remove;
+    On POST: 
+        Request is sent with a JSON indicating the UTub ID and User ID to remove.
 
-    i.e. On post, the following JSON would be sent {
+    i.e. On post, the following JSON would be sent, to delete User 2 from Utub 1: 
+    {
         'UtubID': 1,
         'UserID': 2
     }
+
+    On success, removes the user from the requested UTub.
+    On failure, returns error message in a JSON to indicate the error.
+        Possible failures include:
+            Invalid inputs
+            Invalid permissions
+            Creator tried to remove themselves
     """
     delete_user_json = dict(request.get_json())
 
@@ -335,7 +407,7 @@ def delete_user():
 
     if int(user_id) not in current_user_ids_in_utub:
         # User not in this Utub
-        flash("Can't remove a user that isn't in this UTub.", category="danger")
+
         user_delete_failure = {
             'error': 'Cannot remove user from this UTub.',
             'category': 'danger'
@@ -386,6 +458,19 @@ def add_user(utub_id: int):
     
     Args:
         utub_id (int): The utub that this user is being added to
+
+    On GET:
+        Returns the HTML Form data to add a user to the requested UTub.
+        Form inputs include:
+            Username of user to add to this UTub
+
+    On POST:
+        Attempts to add the user to this UTub.
+        On success, returns UTubID and UserID in JSON, with 200 response code.
+        On failure, returns JSON containing error message:
+            Possible failures include:
+                Invalid permissions
+                User already in the UTub
     """
     utub = Utub.query.get(utub_id)
 
@@ -415,10 +500,13 @@ def add_user(utub_id: int):
         else:
             new_user_to_utub = Utub_Users()
             new_user_to_utub.to_user = new_user
+            new_user_id = new_user_to_utub.user_id
             utub.members.append(new_user_to_utub)
             db.session.commit()
             
-            return jsonify({'url': url_for('home'), 'utubID': utub_id}), 200
+            return jsonify({
+                'utubID': utub_id,
+                'userID': new_user_id}), 200
 
     else:
         add_user_errors = json.dumps(utub_new_user_form.errors, ensure_ascii=False)
@@ -442,6 +530,12 @@ def delete_url():
     Args:
         utub_id (int): The ID of the UTub that contains the URL to be deleted
         url_id (int): The ID of the URL to be deleted
+
+    On success, returns JSON with success of deletion and 200 response code.
+    On failure, returns failure to flash to the client.
+        Possible failures include:
+            Invalid inputs
+            Invalid permissions
     """
     json_args = dict(request.get_json())
 
@@ -465,8 +559,17 @@ def delete_url():
     # Search through all urls in the UTub for the one that matches the prescribed URL ID and get the user who added it - should be only one
     url_added_by = [url_in_utub.user_that_added_url.id for url_in_utub in utub.utub_urls if int(url_in_utub.url_id) == int(url_id)]
 
+    if not url_added_by or len(url_added_by) != 1:
+        # This URL or does not exist in the UTub
+        delete_url_error = {
+            'error': 'This UTub does not contain the specified URL.',
+            'category': 'danger'
+        }
+        return jsonify(delete_url_error), 404
+
     # Otherwise, only one user should've added this url - retrieve them
     url_added_by = url_added_by[0]
+    
 
     if int(current_user.get_id()) == owner_id or int(current_user.get_id()) == url_added_by:
         # User is creator of this UTub, or added the URL
@@ -497,10 +600,25 @@ def delete_url():
 @login_required
 def add_url(utub_id: int):
     """
-    User wants to add URL to UTub. On success, adds the URL to the UTub.
-    
-    On GET, requires Utub ID contained in the URL
+    User wants to add a URL to UTub.
+
+    Args:
         utub_id (int): The Utub to add this URL to
+    
+    On GET:
+        Sends the HTML Form data required to add a URL.
+        Form inputs include:
+            The URL to add
+            An optional description of the URL
+
+    On POST:
+        Checks the sent in Form data.
+        On success, adds the URL to this UTub, and sends back a 200 response code.
+        On failure, sends back a JSON response.
+            Possible failures include:
+                URL already contained in the UTub
+                URL not valid
+                Missing inputs
     """
     utub = Utub.query.get(int(utub_id))
 
@@ -574,11 +692,26 @@ def add_url(utub_id: int):
 @login_required
 def add_tag(utub_id: int, url_id: int):
     """
-    User wants to add a tag to a URL. 5 tags per URL.
+    User wants to add a tag to a URL. 5 tag limit per URL.
     
     Args:
         utub_id (int): The utub that this user is being added to
         url_id (int): The URL this user wants to add a tag to
+
+    On GET:
+        Sends the HTML Form data needed to add a tag to a URL in this UTub
+        Form data includes:
+            Tag name to add
+
+    On POST:
+        Checks if tag can be added to URL in UTub.
+        If success, sends back JSON response with 200 response code.
+        If failure, sends back JSON response with error message.
+            Possible failures included:
+                5 tag limit on URL reached
+                Tag already on URL
+                Invalid permissions
+                Empty input
     """
     utub = Utub.query.get(utub_id)
     utub_url = [url_in_utub for url_in_utub in utub.utub_urls if url_in_utub.url_id == url_id]
@@ -594,6 +727,9 @@ def add_tag(utub_id: int, url_id: int):
         return jsonify(add_tag_error), 403
        
     url_tag_form = UTubNewUrlTagForm()
+
+    if request.method == "GET":
+        return render_template('_add_tag_to_url_form.html', url_tag_form=url_tag_form)
 
     if url_tag_form.validate_on_submit():
 
@@ -650,7 +786,10 @@ def add_tag(utub_id: int, url_id: int):
 
         return jsonify(add_tag_success), 200
 
-    return render_template('_add_tag_to_url_form.html', url_tag_form=url_tag_form)
+    else:
+        creation_tag_errors = json.dumps(url_tag_form.errors, ensure_ascii=False)
+        return jsonify(creation_tag_errors), 404
+
 
 @app.route('/remove_tag', methods=["POST"])
 @login_required
@@ -658,10 +797,17 @@ def remove_tag():
     """
     User wants to delete a tag from a URL contained in a UTub. Only available to members of that UTub.
 
-    JSON on POST:
-        UTubID (int): The ID of the UTub that contains the URL to be deleted
-        UrlID (int): The ID of the URL to be deleted
-        TagID (int): The ID of the tag
+    On POST:
+        Receives a JSON containing the following necessary inputs:
+            UTubID (int): The ID of the UTub that contains the URL to be deleted
+            UrlID (int): The ID of the URL to be deleted
+            TagID (int): The ID of the tag
+
+        On successful removal of tag, sends back JSON message with 200 code.
+        On failure, sends back JSON message with error.
+            Possible failures include:
+                Invalid inputs
+                Invalid permissions
     """
     json_args = dict(request.get_json())
 

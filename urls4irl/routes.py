@@ -1,7 +1,7 @@
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask import render_template, url_for, redirect, flash, request, jsonify, abort
 from urls4irl import app, db
-from urls4irl.forms import (UserRegistrationForm, LoginForm, UTubForm, 
+from urls4irl.forms import (UserRegistrationForm, LoginForm, UTubForm, UTubNameForm, 
                             UTubNewUserForm, UTubNewURLForm, UTubNewUrlTagForm, UTubDescriptionForm)
 from urls4irl.models import User, Utub, URLS, Utub_Urls, Tags, Url_Tags, Utub_Users
 from flask_login import login_user, login_required, current_user, logout_user
@@ -299,55 +299,148 @@ def delete_utub():
 
         return jsonify(delete_success)
 
+@app.route('/update_utub_name/<int:utub_id>', methods=["GET", "POST"])
+@login_required
+def update_utub_name(utub_id: int):
+    """
+    Creator wants to update their UTub name.
+    Name limit is 30 characters.
+    Form data required to be sent from the client with a parameter "utub_name".
+
+    On GET:
+        Returns the HTML Form data to edit the name of the requested UTub.
+        Form inputs include:
+            Name of UTub to change to
+
+        Args:
+            utub_id: The ID of the utub to change the name
+
+    On POST:
+        Attempts to change the name of the UTub.
+        On success, returns UTubID and name in JSON, with 200 response code.
+        On failure, returns JSON containing error message:
+            Possible failures include:
+                Invalid permissions
+                Invalid inputs
+                Name too long
+
+    Example JSON on POST from client:
+    {
+        "utub_ID"    : 1,
+        "utub_name"  : "New UTub name."
+    }
+    """
+    current_utub = Utub.query.get(int(utub_id))
+
+    if int(current_user.get_id()) != int(current_utub.created_by.id):
+        # Only the creator can change UTub description
+        return jsonify({
+            'error': 'Not authorized to change name of this UTub.',
+            'category': 'danger'}), 403
+
+    utub_name_form = UTubNameForm()
+
+    if request.method == 'GET':
+        return render_template('_edit_utub_description_form.html', utub_name_form=utub_name_form)
+
+    if utub_name_form.validate_on_submit():
+        current_utub_name = current_utub.name
+
+        new_utub_name = utub_name_form.utub_name.data
+
+        if new_utub_name != current_utub_name:
+            # Only commit if the name are different
+            current_utub.name = new_utub_name
+            db.session.commit()
+
+            return jsonify({
+                'utubID': utub_id,
+                'utub_name': new_utub_name}), 200
+
+        else:
+            # Input description identical to current utub description
+            return jsonify({
+                'error': "UTub name already set to this.",
+                'category': "danger"}), 404
+
+    else:
+        # User entered too long of a name, or other form errors
+        utub_name_errors = json.dumps(utub_name_form.errors, ensure_ascii=False)
+        return jsonify(utub_name_errors), 404
+
 @app.route('/update_utub_desc/<int:utub_id>', methods=["GET", "POST"])
 @login_required
 def update_utub_desc(utub_id: int):
     """
     Creator wants to update their UTub description.
     Description limit is 500 characters.
-    Form data required to be sent from the client with a parameter "url_description".
-    
+    Form data required to be sent from the client with a parameter "utub_description".
+
     On GET:
-        The previous UTub's description is sent as JSON to be included in the form for editing.
+        Returns the HTML Form data to edit the description of the requested UTub.
+        Form inputs include:
+            Description of UTub to add
+
+        Args:
+            utub_id: The ID of the utub to add a description to
 
     On POST:
-        The new description is saved to the database for that UTub.
-        Requires a JSON in the POST request body.
+        Attempts to change the description of the UTub.
+        On success, returns UTubID and description in JSON, with 200 response code.
+            On possibility of identical message entered, return success
+            with message indicating duplicate description
+        On failure, returns JSON containing error message:
+            Possible failures include:
+                Invalid permissions
+                Description too long
 
-    Example:
+    Example JSON on POST from client:
     {
-        "utub_description": "New UTub description."
+        "utub_ID"           : 1,
+        "utub_description"  : "New UTub description."
     }
-
-    Args:
-        utub_id (int): The ID of the UTub that will have its description updated
     """
     current_utub = Utub.query.get(int(utub_id))
-    
-    if int(current_user.get_id()) not in [int(member.user_id) for member in current_utub.members]:
-        flash("Not authorized to add a description to this UTub.", category="danger")
-        return home(), 403
 
-    current_utub_description = current_utub.utub_description
-
-    if current_utub_description is None:
-        current_utub_description = ""
+    if int(current_user.get_id()) != int(current_utub.created_by.id):
+        # Only the creator can change UTub description
+        return jsonify({
+            'error': 'Not authorized to add a description to this UTub.',
+            'category': 'danger'}), 403
 
     utub_desc_form = UTubDescriptionForm()
 
+    if request.method == 'GET':
+        return render_template('_edit_utub_description_form.html', utub_desc_form=utub_desc_form)
+
     if utub_desc_form.validate_on_submit():
+        current_utub_description = current_utub.utub_description
+
+        if current_utub_description is None:
+            current_utub_description = ""
+
         new_utub_description = utub_desc_form.utub_description.data
 
         if new_utub_description != current_utub_description:
+            # Only commit if the descriptions are different
             current_utub.utub_description = new_utub_description
             db.session.commit()
 
-        return redirect(url_for('home', UTubID=utub_id))
+            return jsonify({
+                'utubID': utub_id,
+                'utub_description': current_utub_description}), 200
 
-    utub_description_for_get = {
-        "utub_description": current_utub_description
-    }
-    return render_template('add_desc_to_utub.html', desc_form=utub_desc_form, current_utub_desc=utub_description_for_get)
+        else:
+            # Input description identical to current utub description
+            return jsonify({
+                'message': "No changes made, description identical",
+                'utubID': utub_id,
+                'utub_description': current_utub_description}), 200
+
+    else:
+        # User entered too long of a description, or other form errors
+        utub_desc_errors = json.dumps(utub_desc_form.errors, ensure_ascii=False)
+        return jsonify(utub_desc_errors), 404
 
 """#####################        END UTUB INVOLVED ROUTES        ###################"""
 

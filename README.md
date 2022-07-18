@@ -34,7 +34,6 @@ This is my first web app and I am excited to share it with the world! Come watch
     - [ ] RestAPI development to lead into mobile app development
     - [ ] Allow user to update a URL description
     - [ ] Allow user to update a URL
-    - [ ] Allow user to update a UTub description
     - [ ] Create a User-Settings table to store preferences and preferred order of URLs/UTubs
 - [ ] Error routing/Custom error page
     - [x] Most http errors are shown in a banner, however 404 will require it's own unique page 
@@ -71,6 +70,7 @@ This is my first web app and I am excited to share it with the world! Come watch
         - [x] Remove a UTub member if you are the UTub owner
         - [x] Remove yourself from a UTub
         - [x] Remove tags on a URL only if you are the owner of the UTub
+        - [x] Allow user to update a UTub description and UTub name
     - [x] Commonizing of URLs to avoid duplicates
     - [x] Verification that the URL is valid
     - [x] Database tables with all many-to-many relationships considered

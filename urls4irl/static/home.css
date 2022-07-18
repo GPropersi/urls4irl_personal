@@ -46,12 +46,22 @@ form {
     height: 50%;
 }
 
+#centerPanelDeck {
+    height: 100%;
+    padding-inline: 2%;
+}
+
 .utub-description {
     margin-left: 5px;
 }
 
 .panel {
     border-radius: 30px;
+}
+
+.utub-urls-row {
+    overflow-y: auto;
+    min-height: 20%;
 }
 
 .utubs-row, .members-row, .tags-row {

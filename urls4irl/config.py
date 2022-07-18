@@ -14,7 +14,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     if FLASK_ENV == 'development':
-        SQLALCHEMY_DATABASE_URI = "postgresql://localhost/ggpropersi"
+        SQLALCHEMY_DATABASE_URI = environ.get("DATABASE_URL")
     else:
         postgres_uri = environ.get("DATABASE_URL")
         if postgres_uri.startswith("postgres://"):

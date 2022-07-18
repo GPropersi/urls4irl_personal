@@ -114,7 +114,7 @@ $(document).ready(function() {
     });
 
     // Remove UTub on click
-    $(document).on('click', '.delete-utub', function () {
+    $(document).on('click', '.delete-utub', function() {
         let utubSelections = $('.utub-names-radios :radio');
         let selected = utubSelections.filter(found => utubSelections[found].checked);
 
@@ -141,8 +141,16 @@ $(document).ready(function() {
             // Handle if a specific tag is checked
             filterShowURLs(tagID);
         };
-            
     });
+
+    $(document).on('click', '.edit-utub', function() {
+        let utubSelections = $('.utub-names-radios :radio');
+        let selected = utubSelections.filter(found => utubSelections[found].checked);
+        if (!jQuery.isEmptyObject(selected)) {
+            let utubId = selected[0].id.replace('utub', '');
+            editUtubDetails(utubId);
+        };
+    })
 
     var csrftoken = $('meta[name=csrf-token]').attr('content')
     $.ajaxSetup({
@@ -324,9 +332,11 @@ function displayUtubData(utubData) {
         utubHolder.append(noURLs);
     };
 
-    $('.delete-utub').remove();
-    if (currentUser == utubData.created_by) {
-        addDeleteUTubButton();
+    
+    if (currentUser != utubData.created_by) {
+        $('.edit-utub').remove();
+    } else if (!$('.edit-utub').length){
+        addEditUtubDetailsButtons();
     };
 
     displayTags(tags);
@@ -422,13 +432,20 @@ function urlDescriptionElemBuilder(urlDesc, urlAdder) {
 };
 
 /**
- * @function addDeleteUTubButton
+ * @function addEditUtubDetailsButtons
  * Gives the creator of this UTub the option to delete this UTub if they choose to
  */
-function addDeleteUTubButton() {
-    const delUTub = $('<btn></btn>').addClass('delete-utub').html("Delete UTub");
-    delUTub.addClass('btn').addClass('btn-warning').addClass('btn-block').css("margin-top", "10px");
-    $(".utub-buttons").append(delUTub);
+function addEditUtubDetailsButtons() {
+    const adminButtonsDiv = $('<div></div>').addClass("edit-utub");
+    const delUTub = $('<a></a>').html("Delete UTub");
+    delUTub.addClass('btn btn-warning delete-utub col-4 py-0').css("margin-top", "10px").attr("type","button");
+
+    const editUTub = $('<a></a>').html("Edit UTub Details");
+    editUTub.addClass('btn btn-info edit-utub col-7 offset-1 py-0').css("margin-top", "10px").attr("type","button");
+
+    adminButtonsDiv.append(delUTub);
+    adminButtonsDiv.append(editUTub);
+    $(".utub-buttons").append(adminButtonsDiv);
 }
 
 /**
@@ -816,6 +833,73 @@ function deleteUtub(utubID) {
 };
 
 /**
+ * @function editUtubDetails
+ * Adds a URL to a UTub via AJAX request.
+ * Pops up a modal to allow the user to type in the URL they wish to add.
+ * If the URL does not send back a valid HTTP code, or the URL is invalid,
+ * an error message will pop up.
+ * @param {string} utubID - The ID for the UTub to generate a URL for
+ */
+ function editUtubDetails(utubID) {
+    let addUrl = $.get("/update_utub_details/" + utubID, function (formHtml) {
+        $('#Modal .modal-content').html(formHtml);
+        $('#Modal').modal();
+
+        const origName = $('.utub-title').text();
+        const origDesc = $('.utub-description').text();
+
+        $('#utub_name').val(origName)
+        $('#utub_description').val(origDesc)
+
+        //console.log($('#utub_name').val())
+        $('#submit').click(function (event) {
+            console.log($('#utub_name').val())
+            event.preventDefault();
+
+            $('.invalid-feedback').remove();
+            $('.alert').remove();
+            $('.form-control').removeClass('is-invalid');
+            let request = $.ajax({
+                url: "/update_utub_details/" + utubID,
+                type: "POST",
+                data: $('#ModalForm').serialize(),
+            });
+
+            request.done(function(addUrlSuccess, textStatus, xhr) {
+                if (xhr.status == 200) {
+                    $('#Modal').modal('hide');
+                    getUtubInfo(addUrlSuccess.utubID);
+                }; 
+            });
+        
+            request.fail(function(xhr, textStatus, error) {
+                if (xhr.status == 409 || xhr.status == 400) {
+                    const flashMessage = xhr.responseJSON.error;
+                    const flashCategory = xhr.responseJSON.category;
+
+                    let flashElem = flashMessageBanner(flashMessage, flashCategory);
+                    flashElem.insertBefore('#modal-body').show();
+                } else if (xhr.status == 404) {
+                    ModalFormErrorGenerator(xhr.responseJSON);
+                }; 
+                console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+                console.log("Error: " + error);
+            });
+        });
+    });
+
+    addUrl.fail(function(xhr, textStatus, error) {
+        if (xhr.status == 403) {
+            const flashMessage = xhr.responseJSON.error;
+            const flashCategory = xhr.responseJSON.category;
+
+            const flashElem = flashMessageBanner(flashMessage, flashCategory);
+            flashElem.insertBefore($('.main-content'));
+        };
+    });
+};
+
+/**
  * @function addUrlToUtub
  * Adds a URL to a UTub via AJAX request.
  * Pops up a modal to allow the user to type in the URL they wish to add.
@@ -856,7 +940,7 @@ function addUrlToUtub(utubID) {
                 } else if (xhr.status == 404) {
                     ModalFormErrorGenerator(xhr.responseJSON);
                 }; 
-                console.log("Failure. Status code: " + response.status + ". Status: " + textStatus);
+                console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
                 console.log("Error: " + error);
             });
         });

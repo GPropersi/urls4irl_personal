@@ -20,7 +20,7 @@ form {
 }
 
 .main-content, .row-main-content {
-    height: 91vh;
+    height: calc(100vh - 1rem - 56px);
     z-index: -1;
 }
 
@@ -44,6 +44,10 @@ form {
 
 #MemberDeck, #ChatDeck {
     height: 50%;
+}
+
+.utub-description {
+    margin-left: 5px;
 }
 
 .panel {

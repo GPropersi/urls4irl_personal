@@ -12,16 +12,20 @@
         </button>
     </div>
     <div class="modal-body" id="modal-body">        
-        {{ utub_desc_form.hidden_tag() }}
+        {{ utub_details_form.hidden_tag() }}
         <fieldset class="form-group">
             <div class="form-group">
-                {{ utub_desc_form.description.label(class="form-control-label")}}
-                {{ utub_desc_form.description(class="form-control form-control-lg")}}
+                {{ utub_details_form.utub_name.label(class="form-control-label")}}
+                {{ utub_details_form.utub_name(class="form-control form-control-lg")}}
+            </div>
+            <div class="form-group">
+                {{ utub_details_form.utub_description.label(class="form-control-label")}}
+                {{ utub_details_form.utub_description(class="form-control form-control-lg")}}
             </div>
         </fieldset>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        {{ utub_desc_form.submit(class="btn btn-success")}}
+        {{ utub_details_form.submit(class="btn btn-success")}}
     </div>
 </form>

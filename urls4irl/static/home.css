@@ -83,7 +83,7 @@ form {
     padding-bottom: 5px;
 }
 
-.utub-buttons, .member-buttons, .url-buttons {
+.utub-buttons, .member-buttons, .url-buttons, .edit-utub-div {
     min-height: max-content;
 }
 
@@ -117,12 +117,23 @@ form {
     padding: 0px;
 }
 
-.del-link, .add-tag {
+.url-btns {
     margin-top: 5px;
+    max-width: 150px;
+    margin-inline-end: 5px;
 }
 
-.del-link {
-    margin-inline-start: 5px;
+
+.edit-utub-div {
+    margin-top: 10px;
+}
+
+.delete-utub {
+    min-width: 60px;
+}
+
+.del-link, .edit-url-desc, .edit-url {
+    white-space: normal !important;
 }
 
 #UTubDeck {
@@ -143,10 +154,6 @@ form {
 
 #ChatDeck {
     background: green;
-}
-
-#UrlOptionsDeck {
-    background: rgb(233, 237, 173);
 }
 
 .tag-badge {

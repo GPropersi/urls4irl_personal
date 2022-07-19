@@ -412,16 +412,30 @@ function urlDescriptionElemBuilder(urlDesc, urlAdder) {
  * @returns - A div containing the relevant buttons for this URL.
  */
  function urlButtonsElemBuilder(utubID, urlID, currentUser, urlAdder, utubCreator){
-    const urlButtonsDiv = $('<div></div>').addClass('card-body url-card-buttons col-6');
-    let addTag = $('<a></a>').addClass("btn btn-primary btn-sm py-0 add-tag col-4").attr({
+    const urlButtonsDiv = $('<div></div>').addClass('card-body url-card-buttons col-10');
+    let addTag = $('<a></a>').addClass("btn btn-primary btn-sm py-0 url-btns add-tag col-2").attr({
         'href': '#',
         'id': utubID + '-' + urlID
     });
     addTag.text("Add Tag");
     urlButtonsDiv.append(addTag);
+
+    let editUrlDescription = $('<a></a>').addClass("btn btn-info btn-sm py-0 url-btns edit-url-desc col-2").attr({
+        'href': '#',
+        'id': utubID + '-' + urlID
+    });
+    editUrlDescription.text("Edit Description");
+    urlButtonsDiv.append(editUrlDescription);
+
+    let editUrl = $('<a></a>').addClass("btn btn-secondary btn-sm py-0 url-btns edit-url col-2").attr({
+        'href': '#',
+        'id': utubID + '-' + urlID
+    });
+    editUrl.text("Edit URL");
+    urlButtonsDiv.append(editUrl);
     
     if (currentUser == urlAdder || currentUser == utubCreator) {
-        let deleteUrl = $('<a></a>').addClass("btn btn-warning btn-sm py-0 del-link col-4 offset-1").attr({
+        let deleteUrl = $('<a></a>').addClass("btn btn-warning btn-sm py-0 url-btns del-link col-2").attr({
             'href': '#',
             'id': utubID + '-' + urlID
         });
@@ -436,12 +450,12 @@ function urlDescriptionElemBuilder(urlDesc, urlAdder) {
  * Gives the creator of this UTub the option to delete this UTub if they choose to
  */
 function addEditUtubDetailsButtons() {
-    const adminButtonsDiv = $('<div></div>').addClass("edit-utub");
+    const adminButtonsDiv = $('<div></div>').addClass("col-12 px-0 edit-utub-div flex-nowrap");
     const delUTub = $('<a></a>').html("Delete UTub");
-    delUTub.addClass('btn btn-warning delete-utub col-4 py-0').css("margin-top", "10px").attr("type","button");
+    delUTub.addClass('btn btn-warning delete-utub col-xl-4 col-lg-12 col-md-12 py-0').attr("type","button");
 
     const editUTub = $('<a></a>').html("Edit UTub Details");
-    editUTub.addClass('btn btn-info edit-utub col-7 offset-1 py-0').css("margin-top", "10px").attr("type","button");
+    editUTub.addClass('btn btn-info edit-utub col-xl-7 col-lg-12 offset-xl-1 col-md-12 py-0 px-0').attr("type","button");
 
     adminButtonsDiv.append(delUTub);
     adminButtonsDiv.append(editUTub);

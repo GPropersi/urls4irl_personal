@@ -420,21 +420,21 @@ function urlDescriptionElemBuilder(urlDesc, urlAdder) {
     addTag.text("Add Tag");
     urlButtonsDiv.append(addTag);
 
-    let editUrlDescription = $('<a></a>').addClass("btn btn-info btn-sm py-0 url-btns edit-url-desc col-2").attr({
-        'href': '#',
-        'id': utubID + '-' + urlID
-    });
-    editUrlDescription.text("Edit Description");
-    urlButtonsDiv.append(editUrlDescription);
-
-    let editUrl = $('<a></a>').addClass("btn btn-secondary btn-sm py-0 url-btns edit-url col-2").attr({
-        'href': '#',
-        'id': utubID + '-' + urlID
-    });
-    editUrl.text("Edit URL");
-    urlButtonsDiv.append(editUrl);
-    
     if (currentUser == urlAdder || currentUser == utubCreator) {
+        let editUrlDescription = $('<a></a>').addClass("btn btn-info btn-sm py-0 url-btns edit-url-desc col-2").attr({
+            'href': '#',
+            'id': utubID + '-' + urlID
+        });
+        editUrlDescription.text("Edit Description");
+        urlButtonsDiv.append(editUrlDescription);
+    
+        let editUrl = $('<a></a>').addClass("btn btn-secondary btn-sm py-0 url-btns edit-url col-2").attr({
+            'href': '#',
+            'id': utubID + '-' + urlID
+        });
+        editUrl.text("Edit URL");
+        urlButtonsDiv.append(editUrl);
+
         let deleteUrl = $('<a></a>').addClass("btn btn-warning btn-sm py-0 url-btns del-link col-2").attr({
             'href': '#',
             'id': utubID + '-' + urlID

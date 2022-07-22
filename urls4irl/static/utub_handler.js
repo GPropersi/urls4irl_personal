@@ -332,9 +332,10 @@ function displayUtubData(utubData) {
         utubHolder.append(noURLs);
     };
 
-    
     if (currentUser != utubData.created_by) {
+        // Remove buttons only utub creator should have access to
         $('.edit-utub').remove();
+        $('.delete-utub').remove();
     } else if (!$('.edit-utub').length){
         addEditUtubDetailsButtons();
     };

@@ -815,6 +815,7 @@ def add_tag(utub_id: int, url_id: int):
             'tag': tag_to_add,
             'tagID': tag_id,
             'url': utub_url[0].url_in_utub.url_string,
+            'urlID': utub_url[0].url_in_utub.id,
             'utubID': utub_id
         }
 

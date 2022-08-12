@@ -4,7 +4,8 @@ $(document).ready(function() {
 
     // Create UTub on button click
     $('.create-utub').click(function() {
-        createUtub();
+        //createUtub();
+        modalGenerator("/create_utub", [])
     });
     
     // Update shown UTub info with selected on radio button selection
@@ -27,9 +28,10 @@ $(document).ready(function() {
         event.stopPropagation();
         const linkToAddTagTo = $(this).attr('id');
         const utubAndURL = linkToAddTagTo.split('-');
-        const utubID = utubAndURL[0];
-        const urlID = utubAndURL[1];
-        addTag(utubID, urlID);
+        let urlArgs = new Array;
+        urlArgs.push(utubAndURL[0]); // Utub ID
+        urlArgs.push(utubAndURL[1]); // Url ID
+        modalGenerator("/add_tag", urlArgs);
     });
 
     // Remove a tag on button click
@@ -47,7 +49,9 @@ $(document).ready(function() {
 
         if (!jQuery.isEmptyObject(selected)) {
             let utubId = selected[0].id.replace('utub', '');
-            addUrlToUtub(utubId);
+            let urlArgs = new Array;
+            urlArgs.push(utubId);
+            modalGenerator("/add_url", urlArgs);
         };
     });
 
@@ -78,7 +82,9 @@ $(document).ready(function() {
 
         if (!jQuery.isEmptyObject(selected)) {
             let utubId = selected[0].id.replace('utub', '');
-            addMemberToUtub(utubId, selected);
+            let urlArgs = new Array;
+            urlArgs.push(utubId);
+            modalGenerator("/add_user", urlArgs);
         };
     });
 
@@ -148,7 +154,9 @@ $(document).ready(function() {
         let selected = utubSelections.filter(found => utubSelections[found].checked);
         if (!jQuery.isEmptyObject(selected)) {
             let utubId = selected[0].id.replace('utub', '');
-            editUtubDetails(utubId);
+            let urlArgs = new Array;
+            urlArgs.push(utubId);
+            modalGenerator("/update_utub_details", urlArgs);
         };
     })
 
@@ -382,7 +390,7 @@ function urlDescriptionElemBuilder(urlDesc, urlAdder) {
  *      "tag_string" -> A string of the tag itself
  * @returns - A tag badge HTML element.
  */
- function tagBadgeBuilder(utubID, urlID, tagDetails){
+function tagBadgeBuilder(utubID, urlID, tagDetails){
     const tagElem = $('<span></span>').addClass('badge badge-pill badge-light tag-badge');
     const tagID = tagDetails.id;
     const tag = tagDetails.tag_string;
@@ -412,7 +420,7 @@ function urlDescriptionElemBuilder(urlDesc, urlAdder) {
  * @param {number} utubCreator - ID of the creator of this UTub.
  * @returns - A div containing the relevant buttons for this URL.
  */
- function urlButtonsElemBuilder(utubID, urlID, currentUser, urlAdder, utubCreator){
+function urlButtonsElemBuilder(utubID, urlID, currentUser, urlAdder, utubCreator){
     const urlButtonsDiv = $('<div></div>').addClass('card-body url-card-buttons col-10');
     let addTag = $('<a></a>').addClass("btn btn-primary btn-sm py-0 url-btns add-tag col-2").attr({
         'href': '#',
@@ -563,58 +571,92 @@ function removeMemberFromUtub(userID, utubID) {
     });
 };
 
-/**
- * @function addMemberToUtub
- * AJAX call for the creator to add a user to their UTub. Pulls up a form that requires
- * creator to input the username of the user they want to add. Username add is case-sensitive.
- * @param {string} utubID - The ID of this UTub
- */
-function addMemberToUtub(utubID) {
-    let addUser_Request = $.get("/add_user/" + utubID, function (formHtml) {
+function modalGenerator(baseUrl, urlArguments) {
+    let finalUrl = baseUrl;
+    for (let idx = 0; idx < urlArguments.length; idx++) {
+        finalUrl += '/' + urlArguments[idx];
+    };
+
+    let modalRequest = $.get(finalUrl, function (formHtml) {
         $('#Modal .modal-content').html(formHtml);
         $('#Modal').modal();
+
+        if (baseUrl === "/update_utub_details") {
+            const origName = $('.utub-title').text();
+            const origDesc = $('.utub-description').text();
+    
+            $('#utub_name').val(origName);
+            $('#utub_description').val(origDesc);
+        };
+
         $('#submit').click(function (event) {
-            event.preventDefault();
+            event.preventDefault()
             $('.invalid-feedback').remove();
             $('.alert').remove();
             $('.form-control').removeClass('is-invalid');
-            let request = $.ajax({
-                url: "/add_user/" + utubID,
-                type: "POST",
-                data: $('#ModalForm').serialize(),
-            });
 
-            request.done(function(addUserSuccess, textStatus, xhr) {
-                if (xhr.status == 200) {
-                    $('#Modal').modal('hide');
-                    getUtubInfo(addUserSuccess.utubID);
-                }; 
-            });
-        
-            request.fail(function(xhr, textStatus, error) {
-                if (xhr.status == 409 || xhr.status == 400 || xhr.status == 403) {
-                    const flashMessage = xhr.responseJSON.Error;
-                    const flashCategory = xhr.responseJSON.Category;
-
-                    let flashElem = flashMessageBanner(flashMessage, flashCategory)
-                    flashElem.insertBefore('#modal-body').show();
-                } else if (xhr.status == 404) {
-                    ModalFormErrorGenerator(xhr.responseJSON);
-                }; 
-                console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
-                console.log("Error: " + error);
-            });
+            switch (baseUrl) {
+                case "/create_utub":
+                    createUtub();
+                    break;
+                case "/add_user":
+                    addMemberToUtub(finalUrl);
+                    break;
+                case "/update_utub_details":
+                    editUtubDetails(finalUrl);
+                    break;
+                case "/add_url":
+                    addUrlToUtub(finalUrl);
+                    break;
+                case "/add_tag":
+                    addTag(finalUrl);
+                    break;
+                default:
+                    globalFlashBanner("Invalid Request.", "danger");
+            };
         });
     });
 
-    // Error if not authorized to add user to this utub
-    addUser_Request.fail(function(xhr, textStatus, error){
+    modalRequest.fail(function(xhr, textStatus, error){
         if (xhr.status == 403) {
-            const flashMessage = xhr.responseJSON.error;
-            const flashCategory = xhr.responseJSON.category;
-
-            globalFlashBanner(flashMessage, flashCategory);
+            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category);
         };
+    });
+};
+
+/**
+ * @function addMemberToUtub
+ * AJAX call for the creator to add a user to their UTub. Username add is case-sensitive.
+ * @param {string} addMemberUrl - Endpoint to hit for adding a member to a UTubURL, includes UTub ID
+ *              i.e. /add_user/3, where 3 = UTubID
+ */
+function addMemberToUtub(addMemberUrl) {
+    let utubID = urlArgs[0];
+    let request = $.ajax({
+        url: addMemberUrl,
+        type: "POST",
+        data: $('#ModalForm').serialize(),
+    });
+
+    request.done(function(addUserSuccess, textStatus, xhr) {
+        if (xhr.status == 200) {
+            $('#Modal').modal('hide');
+            getUtubInfo(addUserSuccess.utubID);
+        }; 
+    });
+
+    request.fail(function(xhr, textStatus, error) {
+        if (xhr.status == 409 || xhr.status == 400 || xhr.status == 403) {
+            const flashMessage = xhr.responseJSON.Error;
+            const flashCategory = xhr.responseJSON.Category;
+
+            let flashElem = flashMessageBanner(flashMessage, flashCategory)
+            flashElem.insertBefore('#modal-body').show();
+        } else if (xhr.status == 404) {
+            ModalFormErrorGenerator(xhr.responseJSON);
+        }; 
+        console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+        console.log("Error: " + error);
     });
 };
 
@@ -726,65 +768,56 @@ function putUtubNames(utubNames) {
 
 /**
  * @function createUtub
- * Sends an AJAX post request to create a UTub with the given information, through a
- * popped up modal form.
+ * Sends an AJAX post request to create a UTub with the given modal form information.
  */
 function createUtub() {
-    $.get("/create_utub", function (formHtml) {
-        $('#Modal .modal-content').html(formHtml);
-        $('#Modal').modal();
-        $('#submit').click(function (event) {
-            event.preventDefault();
-    
-            let request = $.ajax({
-                url: "/create_utub",
-                type: "POST",
-                data: $('#ModalForm').serialize(),
+    let request = $.ajax({
+        url: "/create_utub",
+        type: "POST",
+        data: $('#ModalForm').serialize(),
+    });
+
+    request.done(function(response, textStatus, xhr) {
+        if (xhr.status == 200) {
+            $('#Modal').modal('hide');
+            globalFlashBanner(response.message, response.category);
+
+            let utubRadio = $('<input>');
+            utubRadio.addClass('form-check-input');
+            utubRadio.attr({
+                'type': 'radio',
+                'name': 'utub-name',
+                'id': 'utub' + response.UTubID,
+                'value': 'utub' + response.UTubID
             });
-
-            request.done(function(response, textStatus, xhr) {
-                if (xhr.status == 200) {
-                    $('#Modal').modal('hide');
-                    globalFlashBanner(response.message, response.category);
-
-                    let utubRadio = $('<input>');
-                    utubRadio.addClass('form-check-input');
-                    utubRadio.attr({
-                        'type': 'radio',
-                        'name': 'utub-name',
-                        'id': 'utub' + response.UTubID,
-                        'value': 'utub' + response.UTubID
-                    });
-                    let utubLabel = $('<label></label>');
-                    utubLabel.addClass('form-check-label');
-                    utubLabel.attr({'for': 'utub' + response.UTubID});
-                    utubLabel.html('<b>' + response.UTub_Name + '</b>');
-                    
-                    let newUtubNameDiv = $('<div></div>');
-                    newUtubNameDiv.addClass('utub-names-radios');
+            let utubLabel = $('<label></label>');
+            utubLabel.addClass('form-check-label');
+            utubLabel.attr({'for': 'utub' + response.UTubID});
+            utubLabel.html('<b>' + response.UTub_Name + '</b>');
             
-                    newUtubNameDiv.append(utubRadio);
-                    newUtubNameDiv.append(utubLabel);
-                    $(".utub-names-ids").append(newUtubNameDiv);
-                    utubRadio.prop('checked', true);
-                    getUtubInfo(response.UTubID);
-                };
-            });
-        
-            request.fail(function(xhr, textStatus, error) {
-                if (xhr.status == 409) {
-                    const flashMessage = xhr.responseJSON.error;
-                    const flashCategory = xhr.responseJSON.category;
+            let newUtubNameDiv = $('<div></div>');
+            newUtubNameDiv.addClass('utub-names-radios');
+    
+            newUtubNameDiv.append(utubRadio);
+            newUtubNameDiv.append(utubLabel);
+            $(".utub-names-ids").append(newUtubNameDiv);
+            utubRadio.prop('checked', true);
+            getUtubInfo(response.UTubID);
+        };
+    });
 
-                    let flashElem = flashMessageBanner(flashMessage, flashCategory);
-                    flashElem.insertBefore('#modal-body').show();
-                } else if (xhr.status == 404) {
-                    ModalFormErrorGenerator(xhr.responseJSON);
-                };
-                console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
-                console.log("Error: " + error);
-            });
-        });
+    request.fail(function(xhr, textStatus, error) {
+        if (xhr.status == 409) {
+            const flashMessage = xhr.responseJSON.error;
+            const flashCategory = xhr.responseJSON.category;
+
+            let flashElem = flashMessageBanner(flashMessage, flashCategory);
+            flashElem.insertBefore('#modal-body').show();
+        } else if (xhr.status == 404) {
+            ModalFormErrorGenerator(xhr.responseJSON);
+        };
+        console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+        console.log("Error: " + error);
     });
 };
 
@@ -850,125 +883,75 @@ function deleteUtub(utubID) {
 /**
  * @function editUtubDetails
  * Adds a URL to a UTub via AJAX request.
- * Pops up a modal to allow the user to type in the URL they wish to add.
  * If the URL does not send back a valid HTTP code, or the URL is invalid,
  * an error message will pop up.
- * @param {string} utubID - The ID for the UTub to generate a URL for
+ * @param {string} editUtubUrl - Endpoint to hit for editing UTub details, includes UTub ID
+ *              i.e. /update_utub_details/3, where 3 = UTubID
  */
- function editUtubDetails(utubID) {
-    let addUrl = $.get("/update_utub_details/" + utubID, function (formHtml) {
-        $('#Modal .modal-content').html(formHtml);
-        $('#Modal').modal();
-
-        const origName = $('.utub-title').text();
-        const origDesc = $('.utub-description').text();
-
-        $('#utub_name').val(origName)
-        $('#utub_description').val(origDesc)
-
-        //console.log($('#utub_name').val())
-        $('#submit').click(function (event) {
-            console.log($('#utub_name').val())
-            event.preventDefault();
-
-            $('.invalid-feedback').remove();
-            $('.alert').remove();
-            $('.form-control').removeClass('is-invalid');
-            let request = $.ajax({
-                url: "/update_utub_details/" + utubID,
-                type: "POST",
-                data: $('#ModalForm').serialize(),
-            });
-
-            request.done(function(addUrlSuccess, textStatus, xhr) {
-                if (xhr.status == 200) {
-                    $('#Modal').modal('hide');
-                    getUtubInfo(addUrlSuccess.utubID);
-                }; 
-            });
-        
-            request.fail(function(xhr, textStatus, error) {
-                if (xhr.status == 409 || xhr.status == 400) {
-                    const flashMessage = xhr.responseJSON.error;
-                    const flashCategory = xhr.responseJSON.category;
-
-                    let flashElem = flashMessageBanner(flashMessage, flashCategory);
-                    flashElem.insertBefore('#modal-body').show();
-                } else if (xhr.status == 404) {
-                    ModalFormErrorGenerator(xhr.responseJSON);
-                }; 
-                console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
-                console.log("Error: " + error);
-            });
-        });
+function editUtubDetails(editUtubUrl) {
+    let utubID = urlArgs[0];
+    let request = $.ajax({
+        url: editUtubUrl,
+        type: "POST",
+        data: $('#ModalForm').serialize(),
     });
 
-    addUrl.fail(function(xhr, textStatus, error) {
-        if (xhr.status == 403) {
+    request.done(function(addUrlSuccess, textStatus, xhr) {
+        if (xhr.status == 200) {
+            $('#Modal').modal('hide');
+            getUtubInfo(addUrlSuccess.utubID);
+        }; 
+    });
+
+    request.fail(function(xhr, textStatus, error) {
+        if (xhr.status == 409 || xhr.status == 400) {
             const flashMessage = xhr.responseJSON.error;
             const flashCategory = xhr.responseJSON.category;
 
-            const flashElem = flashMessageBanner(flashMessage, flashCategory);
-            flashElem.insertBefore($('.main-content'));
-        };
+            let flashElem = flashMessageBanner(flashMessage, flashCategory);
+            flashElem.insertBefore('#modal-body').show();
+        } else if (xhr.status == 404) {
+            ModalFormErrorGenerator(xhr.responseJSON);
+        }; 
+        console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+        console.log("Error: " + error);
     });
 };
 
 /**
  * @function addUrlToUtub
  * Adds a URL to a UTub via AJAX request.
- * Pops up a modal to allow the user to type in the URL they wish to add.
  * If the URL does not send back a valid HTTP code, or the URL is invalid,
  * an error message will pop up.
- * @param {string} utubID - The ID for the UTub to generate a URL for
+ * @param {string} addUrlEndpoint - Endpoint to hit for adding a URL, includes UTub ID
+ *              i.e. /add_url/3, where 3 = UTubID
  */
-function addUrlToUtub(utubID) {
-    let addUrl = $.get("/add_url/" + utubID, function (formHtml) {
-        $('#Modal .modal-content').html(formHtml);
-        $('#Modal').modal();
-        $('#submit').click(function (event) {
-            event.preventDefault();
-
-            $('.invalid-feedback').remove();
-            $('.alert').remove();
-            $('.form-control').removeClass('is-invalid');
-            let request = $.ajax({
-                url: "/add_url/" + utubID,
-                type: "POST",
-                data: $('#ModalForm').serialize(),
-            });
-
-            request.done(function(addUrlSuccess, textStatus, xhr) {
-                if (xhr.status == 200) {
-                    $('#Modal').modal('hide');
-                    getUtubInfo(addUrlSuccess.utubID);
-                }; 
-            });
-        
-            request.fail(function(xhr, textStatus, error) {
-                if (xhr.status == 409 || xhr.status == 400) {
-                    const flashMessage = xhr.responseJSON.error;
-                    const flashCategory = xhr.responseJSON.category;
-
-                    let flashElem = flashMessageBanner(flashMessage, flashCategory);
-                    flashElem.insertBefore('#modal-body').show();
-                } else if (xhr.status == 404) {
-                    ModalFormErrorGenerator(xhr.responseJSON);
-                }; 
-                console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
-                console.log("Error: " + error);
-            });
-        });
+function addUrlToUtub(addUrlEndpoint) {
+    let request = $.ajax({
+        url: addUrlEndpoint,
+        type: "POST",
+        data: $('#ModalForm').serialize(),
     });
 
-    addUrl.fail(function(xhr, textStatus, error) {
-        if (xhr.status == 403) {
+    request.done(function(addUrlSuccess, textStatus, xhr) {
+        if (xhr.status == 200) {
+            $('#Modal').modal('hide');
+            getUtubInfo(addUrlSuccess.utubID);
+        }; 
+    });
+
+    request.fail(function(xhr, textStatus, error) {
+        if (xhr.status == 409 || xhr.status == 400) {
             const flashMessage = xhr.responseJSON.error;
             const flashCategory = xhr.responseJSON.category;
 
-            const flashElem = flashMessageBanner(flashMessage, flashCategory);
-            flashElem.insertBefore($('.main-content'));
-        };
+            let flashElem = flashMessageBanner(flashMessage, flashCategory);
+            flashElem.insertBefore('#modal-body').show();
+        } else if (xhr.status == 404) {
+            ModalFormErrorGenerator(xhr.responseJSON);
+        }; 
+        console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+        console.log("Error: " + error);
     });
 };
 
@@ -1031,71 +1014,63 @@ function deleteUTubURL(urlToDel) {
  * Performs an AJAX request to add a tag to the selected URL in the selected UTub.
  * URLs in a given UTub can only have 5 tags each.
  * Pops up a modal for the user to type in the tag they wish to add to the URL.
- * @param {string} utubID - The ID of the currently selected UTub
- * @param {string} urlID - The ID of the URL to add a tag to
+ * @param {string} addTagURL - Endpoint to hit for adding a tag, includes UTub ID and URL ID
+ *              i.e. /add_tag/3/4, where 3 = UTubID, and 4 = UrlID
  */
-function addTag(utubID, urlID){
-    let addTagRequest = $.get("/add_tag/" + utubID + "/" + urlID, function (formHtml) {
-        $('#Modal .modal-content').html(formHtml);
-        $('#Modal').modal();
-        $('#submit').click(function (event) {
-            event.preventDefault();
-            $('.invalid-feedback').remove();
-            $('.alert').remove();
-            $('.form-control').removeClass('is-invalid');
-            let request = $.ajax({
-                url: "/add_tag/" + utubID + "/" + urlID,
-                type: "POST",
-                data: $('#ModalForm').serialize(),
-            });
-
-            request.done(function(addTagSuccess, textStatus, xhr) {
-                if (xhr.status == 200) {
-                    $('#Modal').modal('hide');
-                    //Add tag to URL card here
-                    let urlTagParent = $("#url" + urlID).find($(".tag-span"))[0];
-
-                    let tagToAdd = Object();
-                    tagToAdd.id = addTagSuccess.tagID;
-                    tagToAdd.tag_string = addTagSuccess.tag;
-
-                    let tagCounter = urlTagParent.childElementCount;
-                    let tagBadge = tagBadgeBuilder(utubID, urlID, tagToAdd);
-                    if (tagCounter === 0) {
-                        tagBadge.css("margin-left", "0px");
-                        tagCounter += 1;
-                    };
-    
-                    urlTagParent.append(tagBadge[0]);
-
-                    // Need to add tag to Tag Panel if not already displayed
-                    checkIfTagChoiceAdded(tagToAdd);
-                    
-                    globalFlashBanner(addTagSuccess.message, addTagSuccess.category);
-                }; 
-            });
-        
-            request.fail(function(xhr, textStatus, error) {
-                if (xhr.status == 403 || xhr.status == 400) {
-                    const flashMessage = xhr.responseJSON.error;
-                    const flashCategory = xhr.responseJSON.category;
-
-                    let flashElem = flashMessageBanner(flashMessage, flashCategory);
-                    flashElem.insertBefore('#modal-body').show();
-                } else if (xhr.status == 404) {
-                    ModalFormErrorGenerator(xhr.responseJSON);
-                }; 
-                console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
-                console.log("Error: " + error);
-            });
-        });
+function addTag(addTagURL){
+    let request = $.ajax({
+        url: addTagURL,
+        type: "POST",
+        data: $('#ModalForm').serialize(),
     });
 
-    addTagRequest.fail(function(xhr, textStatus, error) {
-        if (xhr.status == 403) {
-            globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category);
-        };
+    request.done(function(addTagSuccess, textStatus, xhr) {
+        if (xhr.status == 200) {
+            $('#Modal').modal('hide');
+            //Add tag to URL card here
+            let urlTagParent = $("#url" + addTagSuccess.urlID).find($(".tag-span"))[0];
+
+            let tagToAdd = Object();
+            tagToAdd.id = addTagSuccess.tagID;
+            tagToAdd.tag_string = addTagSuccess.tag;
+
+            let tagCounter = urlTagParent.childElementCount;
+            let tagBadge = tagBadgeBuilder(addTagSuccess.utubID, addTagSuccess.urlID, tagToAdd);
+            if (tagCounter === 0) {
+                tagBadge.css("margin-left", "0px");
+                tagCounter += 1;
+            };
+
+            urlTagParent.append(tagBadge[0]);
+
+            // Need to add tag to Tag Panel if not already displayed
+            checkIfTagChoiceAdded(tagToAdd);
+            
+            globalFlashBanner(addTagSuccess.message, addTagSuccess.category);
+        }; 
     });
+
+    request.fail(function(xhr, textStatus, error) {
+        if (xhr.status == 403 || xhr.status == 400) {
+            const flashMessage = xhr.responseJSON.error;
+            const flashCategory = xhr.responseJSON.category;
+
+            let flashElem = flashMessageBanner(flashMessage, flashCategory);
+            flashElem.insertBefore('#modal-body').show();
+        } else if (xhr.status == 404) {
+            ModalFormErrorGenerator(xhr.responseJSON);
+        }; 
+        console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
+        console.log("Error: " + error);
+    });
+    //     });
+    // });
+
+    // addTagRequest.fail(function(xhr, textStatus, error) {
+    //     if (xhr.status == 403) {
+    //         globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category);
+    //     };
+    // });
 };
 
 /**

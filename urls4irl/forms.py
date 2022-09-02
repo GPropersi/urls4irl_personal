@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import Length, Email, EqualTo, InputRequired, ValidationError
 from urls4irl.models import User
+from urls4irl.url_validation import InvalidURLError, check_request_head
 
 
 class UserRegistrationForm(FlaskForm):
@@ -31,12 +32,24 @@ class UserRegistrationForm(FlaskForm):
         if username_exists:
             raise ValidationError('That username is already taken. Please choose another.')
 
+        """ 
+        #TODO
+        Add validation for - no symbols in username, no spaces in username, only number and letters
+        """
+
     def validate_email(self, email):
         """Validates username is unique in the db"""
         email_exists = User.query.filter_by(email=email.data).first()
 
         if email_exists:
             raise ValidationError('That email address is already in use.')
+
+    def validate_password(self, password):
+        """
+        #TODO
+        Add validation for passwords - symbols, spaces, letters, numbers allowed
+        """
+        pass
         
 
 class LoginForm(FlaskForm):
@@ -67,6 +80,22 @@ class UTubForm(FlaskForm):
 
     submit = SubmitField('Create UTub!')
 
+    def validate_name(self, name):
+        """
+        #TODO
+        Add validators for letters, numbers, symbols in utub name
+        - Must begin with lowercase/uppercase letters
+        - Only _, ?, !, +, - allowed as symbols
+        """
+        pass
+
+    def validate_description(self, description):
+        """
+        #TODO
+        Add validators for utub description - must only contain spaces, numbers, letters
+        """
+        pass
+
 
 class EditUTubNameDescForm(FlaskForm):
     """Form to change the name or description of a UTub.
@@ -81,17 +110,24 @@ class EditUTubNameDescForm(FlaskForm):
 
     submit = SubmitField('Edit Details!')
 
+    """Inherit from UTubForm?"""
 
-class UTubNameForm(FlaskForm):
-    """Form to add a description to the UTub.
+    def validate_utub_name(self,utub_name):
+        """
+        #TODO
+        Add validators for letters, numbers, symbols in utub name
+        - Must begin with lowercase/uppercase letters
+        - Only _, ?, !, +, - allowed as symbols
+        """
+        pass
 
-    Fields:
-        name (Stringfield): Maximum 30 chars? TODO
-    """
-    
-    utub_name = StringField('UTub Name', validators=[InputRequired(), Length(min=1, max=30)])
+    def validate_utub_description(self, utub_description):
+        """
+        #TODO
+        Add validators for utub description - must only contain spaces, numbers, letters
+        """
+        pass
 
-    submit = SubmitField('Change UTub Name!')
 
 
 class UTubNewUserForm(FlaskForm):
@@ -125,6 +161,21 @@ class UTubNewURLForm(FlaskForm):
 
     submit = SubmitField('Add URL to this UTub!')
 
+    def validate_url_string(self, url_string):
+        """Validates the URL and normalizes it with https method"""
+        try:
+            url_string.data = check_request_head(url_string.data)
+
+        except InvalidURLError:
+            raise ValidationError("Invalid URL entered.")
+
+    def validate_url_description(self, url_description):
+        """
+        #TODO
+        Validate url_description -must only contain spaces, numbers, letters
+        """
+        pass
+
 
 class UTubNewUrlTagForm(FlaskForm):
     """Form to add a tag to a URL in a Utub.
@@ -137,4 +188,6 @@ class UTubNewUrlTagForm(FlaskForm):
 
     submit = SubmitField('Add tag to this URL!')
 
-    #TODO Add tag validation (PG filter?)
+    def validate_tag_string(self, tag_string):
+        #TODO Add tag validation (PG filter?)
+        pass

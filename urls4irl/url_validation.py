@@ -35,7 +35,7 @@ def _parse_url(url: str) -> str:
     Uses the url_normalize package to 'normalize' the URL as much as possible.
     It then sets all http protocols to https.
     There is a bug in the package that can return 'https:///' which is incorrect.
-    This will search for that in the url string and make them or 'https://'.
+    This will search for that in the url string and make them 'https://'.
 
     Args:
         url (str): The url sent for parsing
@@ -79,9 +79,9 @@ def check_request_head(url: str) -> str:
     Returns:
         str: Either the redirected URL, or the original URL used in the request head method
     """
-    
+
     url = _parse_url(url)
-    
+
     try:
         response = requests.head(url)
     
@@ -90,7 +90,7 @@ def check_request_head(url: str) -> str:
         
     status_code = response.status_code
 
-    BAD_STATUS_CODES = (400, 404, 406, 410, 414, 451, 505)
+    BAD_STATUS_CODES = {400, 404, 406, 410, 414, 451, 505}
 
     if status_code in BAD_STATUS_CODES:
         raise InvalidURLError

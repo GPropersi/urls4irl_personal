@@ -638,7 +638,6 @@ function modalGenerator(baseUrl, urlArguments) {
  *              i.e. /add_user/3, where 3 = UTubID
  */
 function addMemberToUtub(addMemberUrl) {
-    let utubID = urlArgs[0];
     let request = $.ajax({
         url: addMemberUrl,
         type: "POST",
@@ -948,6 +947,7 @@ function addUrlToUtub(addUrlEndpoint) {
     });
 
     request.fail(function(xhr, textStatus, error) {
+        console.log(xhr)
         if (xhr.status == 409 || xhr.status == 400) {
             const flashMessage = xhr.responseJSON.error;
             const flashCategory = xhr.responseJSON.category;
@@ -984,7 +984,7 @@ function deleteUTubURL(urlToDel) {
 
     request.done(function(response, textStatus, xhr) {
         if (xhr.status == 200) {
-            let cardToDel = '#url' + url;
+            let cardToDel = '#url' + urlToDelete.url_ID;
             $(cardToDel).remove();
 
             // Flash success on delete of URL

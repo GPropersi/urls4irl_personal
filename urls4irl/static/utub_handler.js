@@ -1216,6 +1216,11 @@ function removeTag(tagElem, tagData) {
     });
 };
 
+/**
+ * @function checkIfTagChoiceAdded
+ * Checks if a user added a tag to a URL that is already added to another URL of this UTub
+ * @param {Object} tagDetails - Contains .id and .tag_string, details of the tag
+ */
 function checkIfTagChoiceAdded(tagDetails) {
     const tagID = tagDetails.id;
     const utubTagsForm = $('.tags-for-utub');

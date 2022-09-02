@@ -461,15 +461,15 @@ function urlButtonsElemBuilder(utubID, urlID, currentUser, urlAdder, utubCreator
 function addEditUtubDetailsButtons() {
     const adminButtonsDiv = $('<div></div>').addClass("col-12 px-0 edit-utub-div flex-nowrap");
     const delUTub = $('<a></a>').html("Delete UTub");
-    delUTub.addClass('btn btn-warning delete-utub col-xl-4 col-lg-12 col-md-12 py-0').attr("type","button");
+    delUTub.addClass('btn btn-warning delete-utub col-xl-5 col-lg-12 col-md-12 py-0').attr("type","button");
 
-    const editUTub = $('<a></a>').html("Edit UTub Details");
-    editUTub.addClass('btn btn-info edit-utub col-xl-7 col-lg-12 offset-xl-1 col-md-12 py-0 px-0').attr("type","button");
+    const editUTub = $('<a></a>').html("Edit UTub");
+    editUTub.addClass('btn btn-info edit-utub col-xl-6 col-lg-12 offset-xl-1 col-md-12 py-0 px-0').attr("type","button");
 
     adminButtonsDiv.append(delUTub);
     adminButtonsDiv.append(editUTub);
     $(".utub-buttons").append(adminButtonsDiv);
-}
+};
 
 /**
  * @function displayMembers
@@ -571,6 +571,13 @@ function removeMemberFromUtub(userID, utubID) {
     });
 };
 
+/**
+ * @function modalGenerator
+ * Function generates a modal form, pulling the modal HTML form from the backend using the requested URL 
+ * based on the function inputs.
+ * @param {string} baseUrl - The base url to request the form html from
+ * @param {Array} urlArguments - Any arguments to be appended to the base for requesting modal HTML form
+ */
 function modalGenerator(baseUrl, urlArguments) {
     let finalUrl = baseUrl;
     for (let idx = 0; idx < urlArguments.length; idx++) {
@@ -590,7 +597,7 @@ function modalGenerator(baseUrl, urlArguments) {
         };
 
         $('#submit').click(function (event) {
-            event.preventDefault()
+            event.preventDefault();
             $('.invalid-feedback').remove();
             $('.alert').remove();
             $('.form-control').removeClass('is-invalid');
@@ -963,11 +970,9 @@ function addUrlToUtub(addUrlEndpoint) {
  */
 function deleteUTubURL(urlToDel) {
     const utubAndUrl = urlToDel.split('-');
-    const utub = utubAndUrl[0];
-    const url = utubAndUrl[1];
     let urlToDelete = new Object();
-    urlToDelete.UTubID = utub;
-    urlToDelete.url_ID = url;
+    urlToDelete.UTubID = utubAndUrl[0];
+    urlToDelete.url_ID = utubAndUrl[1];
     
     let request = $.ajax({
         url: '/delete_url',
@@ -1063,14 +1068,6 @@ function addTag(addTagURL){
         console.log("Failure. Status code: " + xhr.status + ". Status: " + textStatus);
         console.log("Error: " + error);
     });
-    //     });
-    // });
-
-    // addTagRequest.fail(function(xhr, textStatus, error) {
-    //     if (xhr.status == 403) {
-    //         globalFlashBanner(xhr.responseJSON.error, xhr.responseJSON.category);
-    //     };
-    // });
 };
 
 /**
